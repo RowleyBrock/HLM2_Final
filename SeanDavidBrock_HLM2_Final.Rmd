@@ -15,7 +15,7 @@ library(equatiomatic)
 library(easystats)
 library(performance)
 library(readr)
-year7 <- rio::import(here::here("data", "year7_Student1.sav"))
+year7 <- rio::import(here::here("data", "year7.csv"))
  view(year7)
 ```
 # Data Source: 
