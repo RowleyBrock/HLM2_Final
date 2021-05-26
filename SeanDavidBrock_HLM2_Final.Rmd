@@ -26,7 +26,7 @@ National SWIS Referral Data from 2018-19, restricted to only referrals for subst
 2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
 3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
 
-#Data Processing:
+# Data Processing:
 This dataset was cleaned up through SPSS. The following steps were taken to prepare the dataset for analysis.
 A.	Restricting only the 2018-19 school year
 B.	Creating variables within the referral-level dataset to 
@@ -157,4 +157,3 @@ summary(sub1)
 racedata <- year7[ which(year7$BLW_Sample==TRUE), ]
 view(racedata)
 ```
-
