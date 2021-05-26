@@ -7,7 +7,7 @@ library(equatiomatic)
 library(performance)
 library(readr)
 library(here)
-
+anything that add or subtract
 #now having problems importing my data
 year7 <- read_csv(here("data", "year7.csv"))
  view(year7)
