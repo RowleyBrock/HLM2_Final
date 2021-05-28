@@ -174,6 +174,20 @@ view(racedata)
 ```
 
 
+3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+```{r interactionQ}
+
+subxrace2 <- glmer(OSS_1stRef ~  1 + PrimarySubstanceType.1 * RaceEthnicity + 
+                    (1|School), 
+             data= year7, 
+             family = binomial,
+             control = glmerControl(optimizer = "bobyqa"))
+
+
+
+```
+
+
 ``` {r recycled}
             # ifelse(RaceEthnicity == 1, "Native",
             #                     ifelse(RaceEthnicity == 2, "Asian",
