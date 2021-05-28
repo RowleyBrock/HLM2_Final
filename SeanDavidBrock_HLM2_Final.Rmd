@@ -88,10 +88,15 @@ year7 <- year7 %>%
                                     RaceEthnicity == 4 ~ "Black",
                                     RaceEthnicity == 5 ~ "White",
                                     RaceEthnicity == 8 ~ "Pacific_Islander",
-                                    RaceEthnicity == 44 ~ "Multi"))
+                                    RaceEthnicity == 44 ~ "Multi"),
+          RaceEthnicity = as.factor(year7$RaceEthnicity))
                                     # RaceEthnicity == 6 ~ NA,
                                     # RaceEthnicity == 7 ~ NA
                                     #I'm hoping that these values will be NA anyway?
+
+grouped_race_eth <- year7 %>% 
+ group_by(RaceEthnicity) %>% 
+  count()
 
 #crosstabs race by ethnicity
 tablesubxrace <- year7 %>%
@@ -182,8 +187,6 @@ subxrace2 <- glmer(OSS_1stRef ~  1 + PrimarySubstanceType.1 * RaceEthnicity +
              data= year7, 
              family = binomial,
              control = glmerControl(optimizer = "bobyqa"))
-
-
 
 ```
 
