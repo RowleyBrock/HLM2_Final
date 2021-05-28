@@ -65,26 +65,18 @@ year7 <- year7 %>%
           Drugs.1 = as.factor(year7$Drugs.1),
           Tobacco.1 = as.factor(year7$Tobacco.1),
           RaceEthnicity = as.factor(year7$RaceEthnicity),
-          School = as.factor(year7$School))
-
-# Getting errors trying to conslidate categories,need to figure out how to make missing
-# year7 <- year7 %>%
-#   mutate(RaceEthnicity = ifelse(RaceEthnicity == 1, "Native",
-#                                 ifelse(RaceEthnicity == 2, "Asian",
-#                                 ifelse(RaceEthnicity == 3, "Latinx"))))
-# 
-#                   ifelse(RaceEthnicity == 4, "Black",
-#                                 ifelse(RaceEthnicity == 5, "White",
-#                                 ifelse(RaceEthnicity == 8, "Pacific_Islander",
-#                                 ifelse(RaceEthnicity == 44, "Multi"))))
-#                                 
-# 
-#                                 # ifelse(RaceEthnicity == 6, is.na(), 
-#                                 # ifelse(RaceEthnicity == 7, is.na(), )
-
-#giving me an error for district
-year7 <- year7 %>%
-  year7$District <- as.factor(year7$District)
+          School = as.factor(year7$School),
+          District = as.factor(year7$District),
+          RaceEthnicity = case_when(RaceEthnicity == 1 ~ "Native",
+                                    RaceEthnicity == 2 ~ "Asian",
+                                    RaceEthnicity == 3 ~ "Latinx",
+                                    RaceEthnicity == 4 ~ "Black",
+                                    RaceEthnicity == 5 ~ "White",
+                                    RaceEthnicity == 8 ~ "Pacific_Islander",
+                                    RaceEthnicity == 44 ~ "Multi"))
+                                    # RaceEthnicity == 6 ~ NA,
+                                    # RaceEthnicity == 7 ~ NA
+                                    #I'm hoping that these values will be NA anyway?
 
 #crosstabs race by ethnicity
 tablesubxrace <- year7 %>%
@@ -95,7 +87,6 @@ view(tablesubxrace)
 
 
 #unconditional models
-
 uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7, 
                 family = binomial)
 
@@ -165,4 +156,27 @@ summary(sub1)
 # Probably only necessary for school-level analysis
 racedata <- year7[ which(year7$BLW_Sample==TRUE), ]
 view(racedata)
+```
+
+
+``` {r recycled}
+            # ifelse(RaceEthnicity == 1, "Native",
+            #                     ifelse(RaceEthnicity == 2, "Asian",
+            #                     ifelse(RaceEthnicity == 3, "Latinx"))))
+
+# Getting errors trying to conslidate categories,need to figure out how to make missing
+# year7 <- year7 %>%
+#   mutate(RaceEthnicity = ifelse(RaceEthnicity == 1, "Native",
+#                                 ifelse(RaceEthnicity == 2, "Asian",
+#                                 ifelse(RaceEthnicity == 3, "Latinx"))))
+# 
+#                   ifelse(RaceEthnicity == 4, "Black",
+#                                 ifelse(RaceEthnicity == 5, "White",
+#                                 ifelse(RaceEthnicity == 8, "Pacific_Islander",
+#                                 ifelse(RaceEthnicity == 44, "Multi"))))
+#                                 
+# 
+#                                 # ifelse(RaceEthnicity == 6, is.na(), 
+#                                 # ifelse(RaceEthnicity == 7, is.na(), )
+
 ```
