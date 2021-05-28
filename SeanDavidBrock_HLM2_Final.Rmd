@@ -29,9 +29,24 @@ National SWIS Referral Data from 2018-19, restricted to only referrals for subst
 3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
 
 # Sean to explain variables here:
+Important vars-
+  School : school ID
+  SID : student ID
+  RaceEthnicity : Categorical variable of student race
+  OSS_1stRef : true/false student received OSS on first referral in school year for substance possession
+  Alcohol.1, Drugs.1, Tobacco.1 : true/false student possessed named substance in 1st referral
+  subtype: categorical variable of substance possessed on first referral. Mutually exclusive categories                    eliminate some coocurrence that happened. Probably won't use this variable, but there if needed. 
 
-
-
+Additional vars-
+  Gender: Male (0), Female(1)
+  ODRCount: # of ODRs for substance in that school year for each student
+  Grade : grade of student at time of referral
+  IEP : T/F if student had IEP at time of referral. 
+ 
+Then a bunch of school variables that could be interesting for other analyses with more complex models: 
+  BLW_Sample: Flag for students in schools that had minimum of 5% students in each abbreviated race category            (e.g., B=Black, L=Latinx) race categories referred for substances in year. Likely not needed for these         student-level analyses
+  Tier1Fidelity: school was implementing with fidelity (1) or not (0) based on one of three measures that year.
+ 
 # Data Processing:
 This dataset was cleaned up through SPSS. The following steps were taken to prepare the dataset for analysis.
 A.	Restricting only the 2018-19 school year
@@ -90,20 +105,20 @@ view(tablesubxrace)
 uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7, 
                 family = binomial)
 
-uncond1 <- glmer(OSS_1stRef ~ 1 + (1|School)+ (1|District), data = year7, 
-                family = binomial)
+# uncond1 <- glmer(OSS_1stRef ~ 1 + (1|School)+ (1|District), data = year7, 
+#                 family = binomial)
 
 #look at distribution schools per district: 84% have 2 or fewer
 #robust check, remove schools with only 1, run ICC again
 
-#conditional models
-drug <- glmer(OSS_1stRef ~  1 + Drugs.1  + (1|School)+ (1|District), 
+#conditional models -substance
+drug <- glmer(OSS_1stRef ~  1 + Drugs.1  + (1|School), 
              data= year7, 
              family = binomial)
-alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School)+ (1|District), 
+alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School), 
              data= year7, 
              family = binomial)
-tob <- glmer(OSS_1stRef ~  1 + Tobacco.1 + (1|School)+ (1|District), 
+tob <- glmer(OSS_1stRef ~  1 + Tobacco.1 + (1|School), 
              data= year7, 
              family = binomial)
 sub <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School), 
