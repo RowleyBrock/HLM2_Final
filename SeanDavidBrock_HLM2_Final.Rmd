@@ -17,13 +17,13 @@ library(performance)
 library(readr)
 
 # Data below is SPSS file
-year7 <- rio::import(here::here("data", "Year7_Student1.sav"))
+year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
  view(year7)
 ```
 # Data Source: 
-National SWIS Referral Data from 2018-19, restricted to only referrals for substance possession, grades 6-12. 
+National SWIS Referral Data from 2018-19, restricted to only referrals for substance possession, grades 6-12.
 
-# Research Questions: 
+# Research Questions:
 1. To what extent does the substance a student possessed for their referral (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of school suspension for substance possession?
 2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
 3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
