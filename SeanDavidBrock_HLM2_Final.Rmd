@@ -60,13 +60,12 @@ year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
 
 year7 <- year7 %>% 
    mutate(subtype = ifelse(PrimarySubstanceType.1 == 13, "Tobacco", 
-                     ifelse(PrimarySubstanceType.1 == 14, "Alcohol", "Drugs"))) %>% # LOOK HERE:
-year7$Alcohol.1 <- as.factor(year7$Alcohol.1) %>% 
-year7$Drugs.1 <- as.factor(year7$Drugs.1) %>% 
-year7$Tobacco.1 <- as.factor(year7$Tobacco.1) %>% 
-year7$RaceEthnicity <- as.factor(year7$RaceEthnicity) %>% 
-year7$School <- as.factor(year7$School)
-
+                     ifelse(PrimarySubstanceType.1 == 14, "Alcohol", "Drugs")), 
+          Alcohol.1 = as.factor(year7$Alcohol.1),
+          Drugs.1 = as.factor(year7$Drugs.1),
+          Tobacco.1 = as.factor(year7$Tobacco.1),
+          RaceEthnicity = as.factor(year7$RaceEthnicity),
+          School = as.factor(year7$School))
 
 # Getting errors trying to conslidate categories,need to figure out how to make missing
 # year7 <- year7 %>%
