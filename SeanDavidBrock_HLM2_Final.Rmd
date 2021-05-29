@@ -5,9 +5,26 @@ date: "5/25/2021"
 output: html_document
 ---
 
+# To do 5/28:
+Brock: Code clean-up
+Sean: Insert write-up
+David: Code for converting to and interpreting probabilities Q2 and Q3
+
+# The final product includes two parts: 
+(a) an R script of your analysis and all plots, and 
+(b) a writeup of the results of your analysis which should largely match APA
+style.
+* You will also need to submit the data you are analyzing so I can run your
+script locally.
+
+# R Script (20 points) based on the following criteria:
+* Reproducibility: 2 points
+* Exploratory and descriptive analyses: 3 points
+* Analysis: 10 points
+* Plots: 5 points
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
 library(lme4)
 library(here)
@@ -18,70 +35,57 @@ library(performance)
 library(readr)
 library(brms)
 
-# Data below is SPSS file
 year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
  view(year7)
-
- grouped <- year7 %>% 
- group_by(RaceEthnicity) %>% 
-  count()
- view(grouped)
-
 ```
-# Data Source: 
+# Introduction: 2 points
+Suggested length - one paragraph, 0.5 page max.
+Provide a very brief background on the purpose of the study.
+
+# Data Source:
 National SWIS Referral Data from 2018-19, restricted to only referrals for substance possession, grades 6-12.
 
-# Research Questions:
-1. To what extent does the substance a student possessed for their referral (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of school suspension for substance possession?
-2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
-3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+# Explainatin of variables:
+* School = School ID.
+* SID = Student ID.
+* RaceEthnicity = Categorical variable of student race.
+* OSS_1stRef = True/False (logical) student received Out of School Suspension
+(OSS) on first referral in school year for substance possession.
+* Alcohol.1, Drugs.1, Tobacco.1 = True/False (logical) student possessed named
+substance in 1st referral.
+* subtype = categorical variable of substance possessed on first referral.
+Mutually exclusive categories eliminate some co-ocurrence that happened.
+Probably won't use this variable, but there if needed.
+* Gender = Male (0), Female(1)
+* ODRCount = # of Office Disipline Refferal (ODRs) for substance in that school
+year for each student.
+* Grade = grade of student at time of referral.
+* IEP = True/False (logical) if student had Individualize Education Plan (IEP)
+at time of referral.
+* BLW_Sample = Flag for students in schools that had minimum of 5% students in
+each abbreviated race category (e.g., B=Black, L=Latinx) race categories
+referred for substances in year. Likely not needed for these student-level
+analyses.
+* Tier1Fidelity: school was implementing Positive Behavioral Intervention
+Supports (PBIS) with fidelity (1) or not (0) based on one of three measures that
+year.
 
-# Sean to explain variables here:
-Important vars-
-  School : school ID
-  SID : student ID
-  RaceEthnicity : Categorical variable of student race
-  OSS_1stRef : true/false student received OSS on first referral in school year for substance possession
-  Alcohol.1, Drugs.1, Tobacco.1 : true/false student possessed named substance in 1st referral
-  subtype: categorical variable of substance possessed on first referral. Mutually exclusive categories eliminate some coocurrence that happened. Probably won't use this variable, but there if needed. 
-
-Additional vars-
-  Gender: Male (0), Female(1)
-  ODRCount: # of ODRs for substance in that school year for each student
-  Grade : grade of student at time of referral
-  IEP : T/F if student had IEP at time of referral. 
- 
-Then a bunch of school variables that could be interesting for other analyses with more complex models: 
-  BLW_Sample: Flag for students in schools that had minimum of 5% students in each abbreviated race category            (e.g., B=Black, L=Latinx) race categories referred for substances in year. Likely not needed for these         student-level analyses
-  Tier1Fidelity: school was implementing with fidelity (1) or not (0) based on one of three measures that year.
- 
 # Data Processing:
-This dataset was cleaned up through SPSS. The following steps were taken to prepare the dataset for analysis.
-A.	Restricting only the 2018-19 school year
-B.	Creating variables within the referral-level dataset to 
-a.	dummy code use of suspension and expulsion for each referral
-b.	dummy code type of substance possessed for each referral
-C.	Ordering referrals by student ID and date
-D.	Pivoting the dataset wider by student so that referrals, in order of receipt, were nested with students
-E.	Restricting the sample to 6-12 grades
-F.	Restricting variables to those of interest (student race/ethnicity, substance type, school ID, district ID, student ID, days of suspension, in school suspension, out of school suspension, any suspension, expulsion)
+The following steps were taken to prepare the data set for analysis.
+A.	Restricting only the 2018-19 school year.
+B.	Creating variables within the referral-level dataset.
+a.	dummy code use of suspension and expulsion for each referral.
+b.	dummy code type of substance possessed for each referral.
+C.	Ordering referrals by student ID and date.
+D.	Pivoting the dataset wider by student so that referrals, in order of receipt,
+were nested with students.
+E.	Restricting the sample to 6-12 grades.
+F.	Restricting variables to those of interest (see variable definition above)
 
-#Current Challenges:
-
-
-Create at least 4 models to answer core questions
-Understanding first the variance accounted for by school and district nesting
-Running models for substance type, race, and then race and substance type combined.
-
-Interpretation of coefficients for substance type will be interesting as well. Currently struggling with interpretation of the intercepts and betas in logistic multi-level modeling. The absence of all substances in a referral (i.e., the intercept) is impossible because the dataset contains only referrals for substance possession.
-
-
-```{r}
-#I think data types (unknown) don't work for MLM, need factors. 
-#Tried to turn into factors, but didn't work
+```{r clean_group}
 year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
 
-year7 %>% 
+year7 %>%
    mutate(subtype = ifelse(PrimarySubstanceType.1 == 13, "Tobacco", 
                      ifelse(PrimarySubstanceType.1 == 14, "Alcohol", "Drugs")), 
           Alcohol.1 = as.factor(year7$Alcohol.1),
@@ -98,22 +102,63 @@ year7 %>%
                                     RaceEthnicity == 8 ~ "Pacific_Islander",
                                     RaceEthnicity == 44 ~ "Multi"),
           RaceEthnicity = as.factor(year7$RaceEthnicity))
-                                   
 
-grouped_race_eth <- year7 %>% 
- group_by(RaceEthnicity) %>% 
+grouped <- year7 %>%
+  group_by(RaceEthnicity) %>%
   count()
+view(grouped)
+```
 
-#crosstabs race by ethnicity
+# Research Questions: (2 point)
+1. To what extent does the substance a student possessed for their referral (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of school suspension for substance possession?
+2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
+3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+
+# Writeup (20 points)
+You will develop very short APA writeup of your model results, which should not exceed five pages, double-spaced, with standard 1 inch margins and 12pt Times New Roman font. Manuscripts that exceed the five page limit will have five points removed immediately. As indicated below, you will be required to include at least one figure and at least one table, which along with references, will not count against the page limit. The manuscript should include a (very brief) introduction, methods, results, and a brief discussion including the limitations. As the points below and suggested page limits for each section indicate, the majority of the space should be devoted to the methods and results. The writeup should include the following components:
+
+# Method: (5 points)
+Suggested length - 1.5 to 2 pages. Describe where the data came from (one
+paragraph). Describe your data preparation (e.g., handling missing data,
+transformations). Describe your analytic sample, complete with a table of
+descriptive statistics. Describe the model you plan to fit and/or your model
+building process and why it is appropriate for your sample and research
+question(s). You may optionally include and discuss any exploratory plots here
+as well.
+
+# Results: (5 points)
+Suggested length - 1.5 to 2 pages If appropriate, discuss the results of your
+model building process and your model comparisons. Include and discuss at least
+one table of your model results. Make sure you link specific coefficients or
+model results to your research question. Include at least one plot from your
+model that communicates your findings (e.g., perhaps comparing the model
+predictions to the raw data, or the model predictions for two or more groups)
+
+```{r crosstabs}
+# crosstabs race by ethnicity
 tablesubxrace <- year7 %>%
   group_by(RaceEthnicity, subtype) %>%
   summarise(n = n()) %>%
   spread(subtype, n)
 view(tablesubxrace)
+```
 
+```{r plots}
+# You are required to create one plot from your model that communicates the coefficients, model predictions, or other features. You are welcome to include more than one, but at least one plot should be created.
+```
+# Discussion: (3 points)
+Suggested length - 0.5 to 1 page Briefly note any limitations. Very briefly
+mention how your findings link to the extant literature 
 
+# General style: (3 points)
+The manuscript should generally be free of errors and read similarly to a
+manuscript that has been submitted for peer review. APA formatting should be
+used, with a formatted bibliography listing all references to the extant
+literature.
+
+```{r unconditional_model}
 #unconditional models
-uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7, 
+uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
                 family = binomial)
 
 # uncond1 <- glmer(OSS_1stRef ~ 1 + (1|School)+ (1|District), data = year7, 
@@ -121,12 +166,12 @@ uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
 
 #look at distribution schools per district: 84% have 2 or fewer
 #robust check, remove schools with only 1, run ICC again
-
-
 ```
 
-
-
+# Research Qestion One:
+Convert log likelihood to probability for each substance in sub model to
+understand differential probabilities note: intercept for sub is meaningless.
+probabilities compare to referrals for other substances.
 ``` {r q1}
 #conditional models -substance
 # When run all together, tobacco does not sig. predict OSS
@@ -149,7 +194,9 @@ sub <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School),
 # subnonest <- glm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 , 
 #                    data= year7, 
 #                    family = binomial)
+```
 
+```{r compare_models}
 compare_performance(uncond, tob, alc, drug, sub)
 
 conditional_effects(sub)
@@ -184,30 +231,15 @@ sub_medians <- year7 %>%
 #              data= year7, 
 #              family = binomial)
 ```
-To do 5/28:
 
-Brock: Code clean-up
-Sean: Insert write-up, 
-David: Code for converting to and interpreting probabilities Q2 and Q3
-
-
-#Q1 
--convert log likelihood to probability for each substance in sub model to understand differential probabilities
-note: intercept for sub is meaningless. probabilities compare to referrals for other substances
-
-#Q2
--convert log likelihood to probability for each substance in sub model to understand differential probabilities
-note: intercept for Race is Asian students
-
-#Q3
-- Interpreting interaction?
-
+# Research Question Two:
+Convert log likelihood to probability for each substance in sub model to
+understand differential probabilities.
+* Note: intercept for Race is Asian students
 ```{r q2}
-
 race <- glmer(OSS_1stRef ~ 1 + RaceEthnicity + (1|School),
               data= year7, 
               family = binomial)
-
 
 subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 + 
                     RaceEthnicity + RaceEthnicity:Alcohol.1 + 
@@ -236,8 +268,10 @@ racedata <- year7[ which(year7$BLW_Sample==TRUE), ]
 view(racedata)
 ```
 
-
-3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+# Research Question Three:
+Interpreting interaction?
+3. To what extent is there an interaction between student race and substance in
+predicting out of school suspension for substance possession?
 ```{r Q3}
 #q3
 #maybe see if we can get separate dummy substances to run
@@ -259,7 +293,6 @@ subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
 
 ```
 
-
 ``` {r recycled}
             # ifelse(RaceEthnicity == 1, "Native",
             #                     ifelse(RaceEthnicity == 2, "Asian",
@@ -279,5 +312,11 @@ subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
 # 
 #                                 # ifelse(RaceEthnicity == 6, is.na(), 
 #                                 # ifelse(RaceEthnicity == 7, is.na(), )
-
 ```
+
+# Current Challenges:
+Create at least 4 models to answer core questions
+Understanding first the variance accounted for by school and district nesting
+Running models for substance type, race, and then race and substance type combined.
+
+Interpretation of coefficients for substance type will be interesting as well. Currently struggling with interpretation of the intercepts and betas in logistic multi-level modeling. The absence of all substances in a referral (i.e., the intercept) is impossible because the dataset contains only referrals for substance possession.
