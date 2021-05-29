@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(tidyverse)
 library(lme4)
 library(here)
@@ -19,6 +20,12 @@ library(readr)
 # Data below is SPSS file
 year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
  view(year7)
+
+ grouped <- year7 %>% 
+ group_by(RaceEthnicity) %>% 
+  count()
+ view(grouped)
+
 ```
 # Data Source: 
 National SWIS Referral Data from 2018-19, restricted to only referrals for substance possession, grades 6-12.
@@ -35,7 +42,7 @@ Important vars-
   RaceEthnicity : Categorical variable of student race
   OSS_1stRef : true/false student received OSS on first referral in school year for substance possession
   Alcohol.1, Drugs.1, Tobacco.1 : true/false student possessed named substance in 1st referral
-  subtype: categorical variable of substance possessed on first referral. Mutually exclusive categories                    eliminate some coocurrence that happened. Probably won't use this variable, but there if needed. 
+  subtype: categorical variable of substance possessed on first referral. Mutually exclusive categories eliminate some coocurrence that happened. Probably won't use this variable, but there if needed. 
 
 Additional vars-
   Gender: Male (0), Female(1)
@@ -116,10 +123,19 @@ uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
 #look at distribution schools per district: 84% have 2 or fewer
 #robust check, remove schools with only 1, run ICC again
 
+
+```
+
+
+
+``` {r q1}
 #conditional models -substance
+# When run all together, tobacco does not sig. predict OSS
 drug <- glmer(OSS_1stRef ~  1 + Drugs.1  + (1|School), 
              data= year7, 
-             family = binomial)
+             family = binomial,
+             control = glmerControl(optimizer = "bobyqa")
+)
 alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School), 
              data= year7, 
              family = binomial)
@@ -128,26 +144,59 @@ tob <- glmer(OSS_1stRef ~  1 + Tobacco.1 + (1|School),
              family = binomial)
 sub <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School), 
       data= year7, 
-      family = binomial)
-subnonest <- glm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 , 
-                   data= year7, 
-                   family = binomial)
+      family = binomial,
+             control = glmerControl(optimizer = "bobyqa")
+)
+# subnonest <- glm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 , 
+#                    data= year7, 
+#                    family = binomial)
 
-summary(subnonest)
-summary(sub)
-icc(sub)
-confint(sub)
+compare_performance(uncond, tob, alc, drug, sub)
 
-exp(fixef(drug)) 
-exp(fixef(alc))
-exp(fixef(tob))
-exp(fixef(sub))
-summary(subnonest) #find code for 
+# 
+# summary(subnonest)
+# summary(sub)
+# icc(sub)
+# confint(sub)
+# 
+# exp(fixef(drug)) 
+# exp(fixef(alc))
+# exp(fixef(tob))
+# exp(fixef(sub))
+# summary(subnonest) #find code for 
 
 # 
 # sub1 <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + (1|School), 
 #              data= year7, 
 #              family = binomial)
+```
+To do 5/28:
+
+Brock: Code clean-up
+Sean: Insert write-up, 
+David: Code for converting to and interpreting probabilities Q2 and Q3
+
+
+#Q1 
+-convert log likelihood to probability for each substance in sub model to understand differential probabilities
+note: intercept for sub is meaningless. probabilities compare to referrals for other substances
+
+#Q2
+-convert log likelihood to probability for each substance in sub model to understand differential probabilities
+note: intercept for Race is Asian students
+
+#Q3
+- Interpreting interaction?
+
+```{r q2}
+Interaction equation as a start: subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
+                                    Drugs.1 * RaceEthnicity +
+                                    Tobacco.1 * RaceEthnicity +
+                    (1|School), 
+             data= year7, 
+             family = binomial,
+             control = glmerControl(optimizer = "bobyqa"))
+
 race <- glmer(OSS_1stRef ~  RaceEthnicity + (1|School),
               data= year7, 
               family = binomial)
@@ -180,13 +229,24 @@ view(racedata)
 
 
 3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
-```{r interactionQ}
+```{r Q3}
+#q3
+#maybe see if we can get separate dummy substances to run
 
 subxrace2 <- glmer(OSS_1stRef ~  1 + PrimarySubstanceType.1 * RaceEthnicity + 
                     (1|School), 
              data= year7, 
              family = binomial,
              control = glmerControl(optimizer = "bobyqa"))
+
+Interaction equation as a start: subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
+                                    Drugs.1 * RaceEthnicity +
+                                    Tobacco.1 * RaceEthnicity +
+                    (1|School), 
+             data= year7, 
+             family = binomial,
+             control = glmerControl(optimizer = "bobyqa"))
+
 
 ```
 
