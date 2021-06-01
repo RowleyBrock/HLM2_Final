@@ -298,15 +298,19 @@ ggplot(tidy_uncond, aes(estimate, level)) +
         panel.grid.minor = element_blank())
 
 library(brms)
-install.packages("cmdstanr")
-library(cmdstanr)
+# needed to install cmdstanr...
+# install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+# library(cmdstanr)
+# library(posterior)
+# library(bayesplot)
+# color_scheme_set("brightblue")
+# check_cmdstan_toolchain(fix=TRUE)
+# install_cmdstan(cores = 2)
+
 uncond_brm <- brm(OSS_1stRef ~ 1 + (1|School), data = year7,
             family = bernoulli(link = "logit"),
-            cores = 4)
-            # backend = "cmdstanr")
-
-##Help! cmdstanr
-
+            cores = 4,
+            backend = "cmdstanr")
 
 
 ```
