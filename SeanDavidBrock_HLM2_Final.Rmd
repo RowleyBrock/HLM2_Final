@@ -30,7 +30,6 @@ library(lme4)
 library(here)
 library(rio)
 library(equatiomatic)
-library(easystats)
 library(performance)
 library(readr)
 library(brms)
@@ -179,7 +178,7 @@ the dataset.
 # Add Crosstab of possession trends substance X race. Describe different trends in substance type by race/ethnicity.
 
 ## Procedure
-  ODR data from the SWIS database were extracted following a formal, written data request submitted by this author. For all analyses of administrative actions taken in response to referrals, only a student’s first referral for substance possession was used, meaning any administrative actions in subsequent referrals were not included. This dataset was obtained as a referral-level dataset and required conversion to a student-level dataset by running cases to variables command in SPSS. Analysis was done using only the first referrals for substance possession for each student in the dataset to eliminate concerns about possible confounding of analyses related to decision-making with subsequent referrals. 
+  ODR data from the SWIS database were extracted following a formal, written data request submitted by this author. This dataset was obtained as a referral-level dataset and required conversion to a student-level dataset by running cases to variables command in SPSS. For all analyses of administrative actions taken in response to referrals, only a student’s first referral for substance possession was used, meaning any administrative actions in subsequent referrals were not included. Analysis was done using only the first referrals for substance possession for each student in the dataset to eliminate concerns about possible confounding of analyses related to decision-making with subsequent referrals. 
 
 ## Missing Data
 Missing data was handled by listwise deletion for instances where an individual student's race or ethnicity was not available (i.e., listed as Not Applicable, NA). The race or ethnicity identifier was drawn from the National Center on Educational Statistics approach for collecting and disseminating extant data. In this case, 7.7% (2360 of 30773) of the data was removed from analysis because there was insufficient demographic information.
@@ -297,7 +296,6 @@ ggplot(tidy_uncond, aes(estimate, level)) +
         panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank())
 
-library(brms)
 # needed to install cmdstanr...
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 # library(cmdstanr)
@@ -309,8 +307,23 @@ library(brms)
 
 uncond_brm <- brm(OSS_1stRef ~ 1 + (1|School), data = year7,
             family = bernoulli(link = "logit"),
-            cores = 4,
+            cores = 2,
             backend = "cmdstanr")
+
+summary(uncond_brm)
+
+summary(uncond)
+# pp_check(uncond_brm, type = "bars") #this crashed R
+plot(uncond_bmr)
+library(insight)
+m0_posterior <- get_parameters(uncond_brm)
+head(uncond_brm)
+
+ggplot(m0_posterior, aes(b_Intercept)) +
+  geom_density(fill = "#1DA1F2") +
+  geom_vline(aes(xintercept = mean(b_Intercept)),
+             color = "magenta",
+             size = 1.2)
 
 
 ```
