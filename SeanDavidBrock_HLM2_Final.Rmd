@@ -38,10 +38,6 @@ library(brms)
 year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
 view(year7)
 
-year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
- # view(year7)
-   
-
 ```
 # Introduction: 2 points
 Suggested length - one paragraph, 0.5 page max.
@@ -251,6 +247,13 @@ summary(district)
 Suggested length - 0.5 to 1 page Briefly note any limitations. Very briefly
 mention how your findings link to the extant literature 
 
+Limitations
+- Sample is from schools implementing PBIS. Average in schools that do not implement PBIS may be different. 
+- It may be appropriate to include other parameters in models
+- Only includes out-of-school suspension, and does not include other forms of exclusion
+- Nesting at the district-level would provide answers to questions about how factors at that level (district culture and policies) influence use of suspension, but with the present data, nesting at this level would not have provided those answers. 
+
+
 # General style: (3 points)
 The manuscript should generally be free of errors and read similarly to a
 manuscript that has been submitted for peer review. APA formatting should be
@@ -267,6 +270,45 @@ uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
 
 #look at distribution schools per district: 84% have 2 or fewer
 #robust check, remove schools with only 1, run ICC again
+
+arm::display(uncond)
+
+# translate to probability:
+brms::inv_logit_scaled(fixef(uncond))
+
+#69% chance of OSS
+
+# Probability for an individual 1 SD below
+brms::inv_logit_scaled(-0.40 - 0.95)
+# Probability for an individual 1 SD above
+brms::inv_logit_scaled(-0.40 + 0.95)
+
+library(broom.mixed)
+tidy_uncond <- tidy(uncond, "ran_vals", conf.int = TRUE) %>% 
+  mutate(level = fct_reorder(level, estimate))
+
+ggplot(tidy_uncond, aes(estimate, level)) +
+  geom_linerange(aes(xmin = conf.low, xmax = conf.high),
+                 alpha = 0.01) +
+  geom_point(color = "#1DA1F2") +
+  # get rid of some plot elements
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank())
+
+library(brms)
+install.packages("cmdstanr")
+library(cmdstanr)
+uncond_brm <- brm(OSS_1stRef ~ 1 + (1|School), data = year7,
+            family = bernoulli(link = "logit"),
+            cores = 4)
+            # backend = "cmdstanr")
+
+##Help! cmdstanr
+
+
+
 ```
 
 # Research Question One:
@@ -302,6 +344,7 @@ sub <- glmer(OSS_1stRef ~ 1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School),
 # subnonest <- glm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 , 
 #                    data= year7, 
 #                    family = binomial)
+
 ```
 
 ```{r compare_models}
