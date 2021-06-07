@@ -33,6 +33,7 @@ library(equatiomatic)
 library(performance)
 library(readr)
 library(brms)
+library(tidybayes)
 
 year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
 view(year7)
@@ -217,6 +218,9 @@ Missing data was handled by listwise deletion for instances where an individual 
   To analyze to the extent to which an interaction between Substance Type and
   student Race/Ethnicity, a Substance Type X Race/Ethnicity fixed interaction
   term was modeled with OSS varying randomly at the school level.
+  
+## Priors
+*Note that we used flat, preset priors from the brms package (cite)
 
 # Results: (5 points)
 Suggested length - 1.5 to 2 pages If appropriate, discuss the results of your
@@ -258,6 +262,8 @@ The manuscript should generally be free of errors and read similarly to a
 manuscript that has been submitted for peer review. APA formatting should be
 used, with a formatted bibliography listing all references to the extant
 literature.
+
+
 
 ```{r unconditional_model}
 #unconditional models
@@ -415,6 +421,7 @@ subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
                     (1|School),
              data= year7,
              family = binomial) #specify reference group
+#still getting a convergence "failure", then running the model produces an object 
 
 summary(uncond)
 summary(sub)
@@ -431,6 +438,27 @@ summary(sub1)
 # # Probably only necessary for school-level analysis
 # racedata <- year7[ which(year7$BLW_Sample==TRUE), ]
 # view(racedata)
+
+subxrace_brm <- brm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
+                    RaceEthnicity + RaceEthnicity:Alcohol.1 +
+                    RaceEthnicity:Drugs.1 + RaceEthnicity:Tobacco.1 +
+                    (1|School),
+             data= year7,
+             family = bernoulli(link = "logit"),
+             cores = 2,
+             backend = "cmdstan")
+#took me 25 minutes to run!!
+
+#looking at probability per substance
+brms::inv_logit_scaled(fixef(subxrace_brm))
+# 89% chance of [...] alcohol, 91% drugs, 46% tobacco... need help with this interpretation and how it ties in with differential probabilities (1-p???)
+
+# now trying distributions and seeing if that helps with differentiation
+
+# draws1 <- spread_draws(subxrace_brm, frame[RaceEthnicity,]) 
+# Needs to locate RaceEthnicity somehow... and now I think I'm going too far
+# base_subxrace <- tibble(substance = rep(1:3, each = length()))
+
 ```
 
 # Research Question Three:
@@ -441,11 +469,6 @@ predicting out of school suspension for substance possession?
 #q3
 #maybe see if we can get separate dummy substances to run
 
-# subxrace2 <- glmer(OSS_1stRef ~  1 + PrimarySubstanceType.1 * RaceEthnicity + 
-#                     (1|School), 
-#              data= year7, 
-#              family = binomial,
-#              control = glmerControl(optimizer = "bobyqa"))
 
 subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
                                     Drugs.1 * RaceEthnicity +
@@ -454,6 +477,25 @@ subxrace3 <- glmer(OSS_1stRef ~  1 + Alcohol.1 * RaceEthnicity +
              data= year7, 
              family = binomial,
              control = glmerControl(optimizer = "bobyqa"))
+
+summary(subxrace3)
+
+pred_bysub <- expand.grid(
+  Alcohol.1 = 0:1,
+  Tobacco.1 = 0:1,
+  Drugs.1 = 0:1,
+  RaceEthnicity = 1:5,
+  School = -999
+) 
+# stuck here... "object 'Alcohol.1' not found"
+pred_bysub %>% 
+  mutate(
+    pred = predict(subxrace3,
+                   pred_bysub,
+                   allow.new.levels = TRUE)
+  )
+
+
 ```
 
 ``` {r recycled}
