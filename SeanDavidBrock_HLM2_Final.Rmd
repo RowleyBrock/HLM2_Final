@@ -2,7 +2,9 @@
 title: "SeanDavidBrock_HLM2_Final"
 author: "Sean Austin, David Fainstein, Brock Rowley"
 date: "5/25/2021"
-output: html_document
+output:
+  html_document:
+    css: table-style.css
 ---
 
 # To do 5/28:
@@ -26,6 +28,8 @@ script locally.
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(knitr)
+library(kableExtra)
 library(lme4)
 library(here)
 library(rio)
@@ -33,11 +37,11 @@ library(equatiomatic)
 library(performance)
 library(readr)
 library(brms)
-library(tidybayes)
+library(insight)
+library(broom.mixed)
 
 year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
 view(year7)
-
 ```
 # Introduction: 2 points
 Suggested length - one paragraph, 0.5 page max.
@@ -105,7 +109,7 @@ F.	Restricting variables to those of interest (see variable definition above)
 ```{r clean_group}
 year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
 
-year7 %>%
+year7 <- year7 %>%
    mutate(subtype = ifelse(PrimarySubstanceType.1 == 13, "Tobacco", 
                      ifelse(PrimarySubstanceType.1 == 14, "Alcohol", "Drugs")), 
           Alcohol.1 = as.factor(year7$Alcohol.1),
@@ -188,11 +192,11 @@ Missing data was handled by listwise deletion for instances where an individual 
 ## Dependent Variable
 	   Administrative decisions are actions taken in response to the behavior violation. Up to five administrative decisions can be listed for each ODR, and there are 14 options built into the SWIS referral form for administrators to choose from to describe their decision(s). Options include time in office, loss of privilege, conference with student, parent contact, timeout/detention, individualized instruction, in-school suspension (ISS), out of school suspension (OSS), expulsion, other administrative decision, unknown administrative decision, bus suspension, and restitution. The definitions for each action taken are provided in the SWIS training materials provided to stewards of data systems within each school. To understand the extent to which exclusionary discipline is used with students possessing substances, referral actions were coded to indicate whether ISS, OSS, any suspension (coded yes if student received either ISS or OSS), or expulsion were used with each individual referral. Per the SWIS training materials, OSS is defined as a 1-3 day period when student is not allowed on campus (although greater than 3 days was frequently reported under this code). 
 	
-	Independent Variables
-	  Substance Type
-	    Three substance types are delineated within the SWIS system: Alcohol Possession, Drug Possession, or Tobacco Possession. No additional specification is provided within these codes. For analysis, these codes were turned into dummy-coded variables.
-	  Race/Ethnicity
-	    The Race/Ethnicity codes available within this dataset follow federal codes, including codes for Asian, Black/African American, Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and White. This variable was included as a categorical variable. 
+## Independent Variables
+### Substance Type
+  Three substance types are delineated within the SWIS system: Alcohol Possession, Drug Possession, or Tobacco Possession. No additional specification is provided within these codes. For analysis, these codes were turned into dummy-coded variables.
+### Race/Ethnicity
+  The Race/Ethnicity codes available within this dataset follow federal codes, including codes for Asian, Black/African American, Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and White. This variable was included as a categorical variable. 
 
 ## Independent Variables
 ### Substance Type
@@ -231,19 +235,37 @@ model that communicates your findings (e.g., perhaps comparing the model
 predictions to the raw data, or the model predictions for two or more groups)
 
 # We should plot each model (lines by substance, lines by race, lines of interactions (might be too messy?)
-
+**Table 1**
 ```{r crosstabs}
-# crosstabs race by ethnicity
+# crosstabs race ethnicity by primary substance type
 tablesubxrace <- year7 %>%
   group_by(RaceEthnicity, subtype) %>%
   summarise(n = n()) %>%
   spread(subtype, n)
 view(tablesubxrace)
-summary(district)
+#summary(district)
+kable(
+  tablesubxrace,
+  format = "html",
+  col.names = c("RaceEthnicity", "Alcohol", "Drugs", "Tobacco"),
+  align = c("l", "c", "c", "c"),
+  caption = "Number of Office Refferals by Race and Substance Type"
+  ) %>%
+  kable_styling(full_width = TRUE) %>%
+  row_spec(row = 0, align = "c") %>%
+   footnote(
+    general_title = "Note.",
+    general = "1 = Native, 2 = Asian, 3 = Latinx, 4 = Black, 5 = White, 8 = Pacific_Islander, 44 = Multi.",
+   footnote_as_chunk = TRUE
+    )
 ```
 
 ```{r plots}
 # You are required to create one plot from your model that communicates the coefficients, model predictions, or other features. You are welcome to include more than one, but at least one plot should be created.
+
+plot <- ggplot(year7, aes(ODRCount,RaceEthnicity)) +
+geom_line() +
+facet_wrap(~subtype)
 ```
 
 # Discussion: (3 points)
@@ -288,8 +310,8 @@ brms::inv_logit_scaled(-0.40 - 0.95)
 # Probability for an individual 1 SD above
 brms::inv_logit_scaled(-0.40 + 0.95)
 
-library(broom.mixed)
-tidy_uncond <- tidy(uncond, "ran_vals", conf.int = TRUE) %>% 
+
+tidy_uncond <- tidy(uncond, "ran_vals", conf.int = TRUE) %>%
   mutate(level = fct_reorder(level, estimate))
 
 ggplot(tidy_uncond, aes(estimate, level)) +
@@ -321,7 +343,7 @@ summary(uncond_brm)
 summary(uncond)
 # pp_check(uncond_brm, type = "bars") #this crashed R
 plot(uncond_bmr)
-library(insight)
+
 m0_posterior <- get_parameters(uncond_brm)
 head(uncond_brm)
 
