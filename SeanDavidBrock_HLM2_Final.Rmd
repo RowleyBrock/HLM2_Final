@@ -350,6 +350,16 @@ sub <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1  + (1|School),
              family = binomial,
              control = glmerControl(optimizer = "bobyqa")
 )
+summary(sub)
+arm::display(sub)
+
+# translate to probability:
+brms::inv_logit_scaled(fixef(sub))
+
+#Tobacco (intercept) = 46% chance, Alcohol= 92% chance, Drugs = 93% chance
+
+
+
 # drug_eq <- extract_eq(drug)
 # 
 # alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School), 
@@ -361,11 +371,6 @@ sub <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1  + (1|School),
 #              data= year7, 
 #              family = binomial)
 # tob_eq <- extract_eq(tob)
-# sub <- glmer(OSS_1stRef ~ 1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School),
-#       data= year7,
-#       family = binomial,
-#              control = glmerControl(optimizer = "bobyqa")
-# )
 # sub_eq <- extract_eq(sub)
 
 # subnonest <- glm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 , 
@@ -417,6 +422,16 @@ race <- glmer(OSS_1stRef ~ 1 + RaceEthnicity + (1|School),
               data= year7,
               family = binomial)
 
+summary(race)
+arm::display(race)
+
+# translate to probability:
+brms::inv_logit_scaled(fixef(race))
+
+    # (Intercept)  RaceEthnicity2  RaceEthnicity3  RaceEthnicity4  RaceEthnicity5  RaceEthnicity8 RaceEthnicity44 
+    #   0.6547389       0.6098714       0.5890622       0.5982255       0.5140159       0.5417021       0.5631654 
+
+
 subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
                     RaceEthnicity + RaceEthnicity:Alcohol.1 +
                     RaceEthnicity:Drugs.1 + RaceEthnicity:Tobacco.1 +
@@ -427,14 +442,11 @@ subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
 
 summary(uncond)
 summary(sub)
-summary(sub1)
 summary(race)
 summary(subxrace)
 
-summary(uncond1)
 icc(sub, by_group = TRUE)
 summary(sub1)
-?icc
 
 # #New dataset restricting to only most diverse schools.
 # # Probably only necessary for school-level analysis
