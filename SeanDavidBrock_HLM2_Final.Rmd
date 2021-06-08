@@ -63,11 +63,13 @@ suspension (OSS) differs by substance possessed and student race/ethnicity.
 # Research Questions
 1. To what extent does the substance a student possessed for their referral
 (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of
-school suspension for substance possession? 2. To what extent does student race
-predict whether or not a student receives an out of school suspension for
-substance possession? 3. To what extent is there an interaction between student
-race and substance in predicting out of school suspension for substance
-possession?
+school suspension for substance possession? 
+
+2. To what extent does student race predict whether or not a student receives an
+out of school suspension for substance possession?
+
+3. To what extent is there an interaction between student race and substance in
+predicting out of school suspension for substance possession?
 
 # Method
 ##Sample
@@ -116,13 +118,13 @@ interest
 For analysis in R, the variables needed to be properly formatted as factors to
 use multilevel modeling. In addition, labels were assigned to values in the
 RaceEthnicity category to support interpretation of model summaries.
-### Missing Data Missing data was handled by listwise deletion for instances
-where an individual student's race or ethnicity was not available (i.e., listed
-as Not Applicable, NA). The race or ethnicity identifier was drawn from the
-National Center on Educational Statistics approach for collecting and
-disseminating extant data. In this case, 7.7% (2360 of 30773 observations) of
-the data was removed from analyses because there was insufficient demographic
-information.
+### Missing Data 
+  Missing data was handled by listwise deletion for instances where an individual
+student's race or ethnicity was not available (i.e., listed as Not Applicable,
+NA). The race or ethnicity identifier was drawn from the National Center on
+Educational Statistics approach for collecting and disseminating extant data. In
+this case, 7.7% (2360 of 30773 observations) of the data was removed from
+analyses because there was insufficient demographic information.
 ## Measures 
 ### Dependent Variable 
   Administrative decisions are actions taken in response to the behavior
@@ -146,10 +148,12 @@ this code).
   Three substance types are delineated within the SWIS system: Alcohol Possession,
 Drug Possession, or Tobacco Possession. No additional specification is provided
 within these codes. For analysis, these codes were turned into dummy-coded
-variables. #### Race/Ethnicity The Race/Ethnicity codes available within this
-dataset follow federal codes, including codes for Asian, Black/African American,
-Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and
-White. This variable was included as a categorical variable.
+variables. 
+#### Race/Ethnicity 
+  The Race/Ethnicity codes available within this dataset follow federal codes,
+including codes for Asian, Black/African American, Latinx, Multiracial (more
+than one race), Indigenous, Pacific Islander, and White. This variable was
+included as a categorical variable.
 
 # Add Table of Mean rates by substance and mean rates by race. 
 # Add Crosstab of possession trends substance X race. Describe different trends in substance type by race/ethnicity.
@@ -165,7 +169,7 @@ of districts had only one school in the dataset and 85% of districts had two or
 fewer schools, meaning interpretation of this variance at the district-level
 would have limited usefulness if analyzed with a three-level model. 
 ## Q1 
-To analyze use of OSS by substance, logistic multi-level modeling was used
+  To analyze use of OSS by substance, logistic multi-level modeling was used
 examine differential odds ratios while accounting for variance in decisions
 attributable to nesting at the school-level. Substance type variables were
 modeled with fixed effects, while variance at the school-level was allowed to
@@ -192,7 +196,8 @@ groups)"
 
 # We should plot each model (lines by substance, lines by race, lines of interactions (might be too messy?) **Table 1**
 
-# Discussion "Suggested length - 0.5 to 1 page Briefly note any limitations.
+# Discussion 
+"Suggested length - 0.5 to 1 page Briefly note any limitations.
 Very briefly mention how your findings link to the extant literature "
 
 Limitations 
