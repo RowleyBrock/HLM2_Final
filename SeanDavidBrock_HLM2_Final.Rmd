@@ -51,19 +51,27 @@ contemporary schools to substance-related behavior occurs through their
 discipline systems. Effective support for these students is most promising if
 delivered through a preventative and proactive system as outlined with the
 Interconnected Systems Framework (ISF) (Barrett et al., 2013). The ISF advocates
-integration and coordination with mental health service providers to meet a broader range of behavioral health needs more effectively. Although the national mindset is moving toward a more inclusive approach to behavioral health, this study seeks to determine to what extent school practices have shifted with it. The objective of this study is to leverage a national office discipline referral (ODR) dataset to examine the administrative decisions for
-substance possession referrals. Specifically, this study seeks to examine how
-use of out-of-school suspension (OSS) differs by substance possessed and student
-race/ethnicity.
+integration and coordination with mental health service providers to meet a
+broader range of behavioral health needs more effectively. Although the national
+mindset is moving toward a more inclusive approach to behavioral health, this
+study seeks to determine to what extent school practices have shifted with it.
+The objective of this study is to leverage a national office discipline referral
+(ODR) dataset to examine the administrative decisions for substance possession
+referrals. Specifically, this study seeks to examine how use of out-of-school
+suspension (OSS) differs by substance possessed and student race/ethnicity.
 
 # Research Questions
-1. To what extent does the substance a student possessed for their referral (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of school suspension for substance possession?
-2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
-3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+1. To what extent does the substance a student possessed for their referral
+(Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of
+school suspension for substance possession? 2. To what extent does student race
+predict whether or not a student receives an out of school suspension for
+substance possession? 3. To what extent is there an interaction between student
+race and substance in predicting out of school suspension for substance
+possession?
 
 # Method
 ##Sample
-The data sample for the project comes from the web-based School-Wide Information
+  The data sample for the project comes from the web-based School-Wide Information
 System (SWIS) for collecting and analyzing school discipline data in the form of
 office discipline referrals (ODRs; May et al., 2013) following a formal, written
 data request submitted by the first author. The sample contained all referrals
@@ -89,82 +97,115 @@ student was 1.21 (SD = 0.569), with a range of 1-14 referrals for students in
 the dataset.
 
 ## Procedure
-   This dataset was obtained as a referral-level dataset and required conversion to a student-level dataset by running cases to variables command in SPSS. For all analyses of administrative actions taken in response to referrals, only a student’s first referral for substance possession was used, meaning any administrative actions in subsequent referrals were not included. Analysis was done using only the first referrals for substance possession for each student in the dataset to eliminate concerns about possible confounding of analyses related to decision-making with subsequent referrals. 
-### Data Preparation
-  Prior to beginning this course, the following steps were taken to prepare the data set for analysis.
-A.	Restricted only the 2018-19 school year.
-B.	Created variables within the referral-level dataset.
-  a.  Dummy coded variable for use of suspension and expulsion for each referral.
-  b.	Dummy coded variable for type of substance possessed for each referral.
-C.	Pivoted the dataset wider by student so that referrals, in order of date of receipt,
-were nested with students.
-E.	Restricted the sample to 6-12 grades.
-F.	Restricted variables to those of interest
+  This dataset was obtained as a referral-level dataset and required conversion to
+a student-level dataset by running cases to variables command in SPSS. For all
+analyses of administrative actions taken in response to referrals, only a
+student’s first referral for substance possession was used, meaning any
+administrative actions in subsequent referrals were not included. Analysis was
+done using only the first referrals for substance possession for each student in
+the dataset to eliminate concerns about possible confounding of analyses related
+to decision-making with subsequent referrals. ### Data Preparation Prior to
+beginning this course, the following steps were taken to prepare the data set
+for analysis. A.	Restricted only the 2018-19 school year. B.	Created variables
+within the referral-level dataset. a.  Dummy coded variable for use of
+suspension and expulsion for each referral. b.	Dummy coded variable for type of
+substance possessed for each referral. C.	Pivoted the dataset wider by student
+so that referrals, in order of date of receipt, were nested with students.
+E.	Restricted the sample to 6-12 grades. F.	Restricted variables to those of
+interest
+For analysis in R, the variables needed to be properly formatted as factors to
+use multilevel modeling. In addition, labels were assigned to values in the
+RaceEthnicity category to support interpretation of model summaries.
+### Missing Data Missing data was handled by listwise deletion for instances
+where an individual student's race or ethnicity was not available (i.e., listed
+as Not Applicable, NA). The race or ethnicity identifier was drawn from the
+National Center on Educational Statistics approach for collecting and
+disseminating extant data. In this case, 7.7% (2360 of 30773 observations) of
+the data was removed from analyses because there was insufficient demographic
+information.
+## Measures 
+### Dependent Variable 
+  Administrative decisions are actions taken in response to the behavior
+violation. Up to five administrative decisions can be listed for each ODR, and
+there are 14 options built into the SWIS referral form for administrators to
+choose from to describe their decision(s). Options include time in office, loss
+of privilege, conference with student, parent contact, timeout/detention,
+individualized instruction, in-school suspension (ISS), out of school suspension
+(OSS), expulsion, other administrative decision, unknown administrative
+decision, bus suspension, and restitution. The definitions for each action taken
+are provided in the SWIS training materials provided to stewards of data systems
+within each school. To understand the extent to which exclusionary discipline is
+used with students possessing substances, referral actions were coded to
+indicate whether ISS, OSS, any suspension (coded yes if student received either
+ISS or OSS), or expulsion were used with each individual referral. Per the SWIS
+training materials, OSS is defined as a 1-3 day period when student is not
+allowed on campus (although greater than 3 days was frequently reported under
+this code).
+### Independent Variables 
+#### Substance Type 
+  Three substance types are delineated within the SWIS system: Alcohol Possession,
+Drug Possession, or Tobacco Possession. No additional specification is provided
+within these codes. For analysis, these codes were turned into dummy-coded
+variables. #### Race/Ethnicity The Race/Ethnicity codes available within this
+dataset follow federal codes, including codes for Asian, Black/African American,
+Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and
+White. This variable was included as a categorical variable.
 
-For analysis in R, the variables needed to be properly formatted as factors to use multilevel modeling. In addition, labels were assigned to values in the RaceEthnicity category to support interpretation of model summaries. 
-
-### Missing Data
-Missing data was handled by listwise deletion for instances where an individual student's race or ethnicity was not available (i.e., listed as Not Applicable, NA). The race or ethnicity identifier was drawn from the National Center on Educational Statistics approach for collecting and disseminating extant data. In this case, 7.7% (2360 of 30773 observations) of the data was removed from analyses because there was insufficient demographic information.
-
-## Measures
-### Dependent Variable
-	   Administrative decisions are actions taken in response to the behavior violation. Up to five administrative decisions can be listed for each ODR, and there are 14 options built into the SWIS referral form for administrators to choose from to describe their decision(s). Options include time in office, loss of privilege, conference with student, parent contact, timeout/detention, individualized instruction, in-school suspension (ISS), out of school suspension (OSS), expulsion, other administrative decision, unknown administrative decision, bus suspension, and restitution. The definitions for each action taken are provided in the SWIS training materials provided to stewards of data systems within each school. To understand the extent to which exclusionary discipline is used with students possessing substances, referral actions were coded to indicate whether ISS, OSS, any suspension (coded yes if student received either ISS or OSS), or expulsion were used with each individual referral. Per the SWIS training materials, OSS is defined as a 1-3 day period when student is not allowed on campus (although greater than 3 days was frequently reported under this code). 
-	
-### Independent Variables
-#### Substance Type
-  Three substance types are delineated within the SWIS system: Alcohol Possession, Drug Possession, or Tobacco Possession. No additional specification is provided within these codes. For analysis, these codes were turned into dummy-coded variables.
-#### Race/Ethnicity
-  The Race/Ethnicity codes available within this dataset follow federal codes, including codes for Asian, Black/African American, Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and White. This variable was included as a categorical variable. 
-
-
-# Add Table of Mean rates by substance and mean rates by race.
+# Add Table of Mean rates by substance and mean rates by race. 
 # Add Crosstab of possession trends substance X race. Describe different trends in substance type by race/ethnicity.
 
-# Analytic Plan
-## Descriptive Analysis  
-  Descriptive analysis indicated some differences in likelihood of receiving OSS based on substance type and student race/ethnicity; however, the crosstab table shows that there are different possession trends by student race/ethnicity. For all research questions, modeling accounted for variance at the individual student and school levels. Modeling with nesting at the district level was considered as well, but over 64% of districts had only one school in the dataset and 85% of districts had two or fewer schools, meaning interpretation of this variance at the district-level would have limited usefulness if analyzed with a three-level model. 
-## Q1
-  To analyze use of OSS by substance, logistic multi-level modeling was used
-  examine differential odds ratios while accounting for variance in decisions
-  attributable to nesting at the school-level. Substance type variables were
-  modeled with fixed effects, while variance at the school-level was allowed to
-  vary as a random effect. 
-## Priors
-*Note that we used flat, preset priors from the brms package (cite)
+# Analytic Plan 
+## Descriptive Analysis 
+  Mean rates of OSS indicated differences by substance type and student
+race/ethnicity; however, the crosstab table shows that there are different
+possession trends by student race/ethnicity. For all research questions,
+modeling accounted for variance at the individual student and school levels.
+Modeling with nesting at the district level was considered as well, but over 64%
+of districts had only one school in the dataset and 85% of districts had two or
+fewer schools, meaning interpretation of this variance at the district-level
+would have limited usefulness if analyzed with a three-level model. 
+## Q1 
+To analyze use of OSS by substance, logistic multi-level modeling was used
+examine differential odds ratios while accounting for variance in decisions
+attributable to nesting at the school-level. Substance type variables were
+modeled with fixed effects, while variance at the school-level was allowed to
+vary as a random effect.
+## Priors 
+*Note that we used flat, preset priors from the brms package
+(cite)
+## Q2 
+To analyze differences in exclusionary discipline by student
+Race/Ethnicity, multi-level modeling was used with student Race/Ethnicity as
+fixed effects and school varying as a random effect.
+## Q3 
+To analyze to the extent to which an interaction between Substance Type
+and student Race/Ethnicity, a Substance Type X Race/Ethnicity fixed interaction
+term was modeled with OSS varying randomly at the school level.
+# Results 
+"Suggested length - 1.5 to 2 pages If appropriate, discuss the results
+of your model building process and your model comparisons. Include and discuss
+at least one table of your model results. Make sure you link specific
+coefficients or model results to your research question. Include at least one
+plot from your model that communicates your findings (e.g., perhaps comparing
+the model predictions to the raw data, or the model predictions for two or more
+groups)"
 
-## Q2
-  To analyze differences in exclusionary discipline by student Race/Ethnicity,
-  multi-level modeling was used with student Race/Ethnicity as fixed effects and
-  school varying as a random effect.
-  
-## Q3
-  To analyze to the extent to which an interaction between Substance Type and
-  student Race/Ethnicity, a Substance Type X Race/Ethnicity fixed interaction
-  term was modeled with OSS varying randomly at the school level.
-  
+# We should plot each model (lines by substance, lines by race, lines of interactions (might be too messy?) **Table 1**
 
+# Discussion "Suggested length - 0.5 to 1 page Briefly note any limitations.
+Very briefly mention how your findings link to the extant literature "
 
-# Results
-"Suggested length - 1.5 to 2 pages If appropriate, discuss the results of your
-model building process and your model comparisons. Include and discuss at least
-one table of your model results. Make sure you link specific coefficients or
-model results to your research question. Include at least one plot from your
-model that communicates your findings (e.g., perhaps comparing the model
-predictions to the raw data, or the model predictions for two or more groups)"
-
-# We should plot each model (lines by substance, lines by race, lines of interactions (might be too messy?)
-**Table 1**
-
-
-# Discussion
-"Suggested length - 0.5 to 1 page Briefly note any limitations. Very briefly
-mention how your findings link to the extant literature "
-
-Limitations
-- Sample is from schools implementing PBIS. Average in schools that do not implement PBIS may be different. 
-- It may be appropriate to include other parameters in models
-- Only includes out-of-school suspension, and does not include other forms of exclusion
-- Nesting at the district-level would provide answers to questions about how factors at that level (district culture and policies) influence use of suspension, but with the present data, nesting at this level would not have provided those answers. 
+Limitations 
+- Sample is from schools implementing PBIS. Average in schools that
+do not implement PBIS may be different. 
+- It may be appropriate to include other
+parameters in models 
+- Only includes out-of-school suspension, and does not
+include other forms of exclusion 
+- Nesting at the district-level would provide
+answers to questions about how factors at that level (district culture and
+policies) influence use of suspension, but with the present data, nesting at
+this level would not have provided those answers.
 
 ```{r clean_group}
 year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
@@ -225,8 +266,6 @@ plot <- ggplot(year7, aes(ODRCount,RaceEthnicity)) +
 geom_line() +
 facet_wrap(~subtype)
 ```
-
-
 
 #Unconditional Model
 ```{r unconditional_model}
