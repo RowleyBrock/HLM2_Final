@@ -367,11 +367,11 @@ brms::inv_logit_scaled(fixef(sub))
 
 # drug_eq <- extract_eq(drug)
 # 
-# alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School), 
-#              data= year7, 
-#              family = binomial)
-# # alc_eq <- extract_eq(alc)
-# 
+alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School),
+             data= year7,
+             family = binomial)
+alc_eq <- extract_eq(alc)
+
 # tob <- glmer(OSS_1stRef ~  1 + Tobacco.1 + (1|School), 
 #              data= year7, 
 #              family = binomial)
@@ -423,20 +423,127 @@ sub_medians <- year7 %>%
 # Research Question Two:
 2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
 ```{r q2}
-race <- glmer(OSS_1stRef ~ 1 + RaceEthnicity + (1|School),
-              data= year7,
-              family = binomial)
+
+race <- brm(OSS_1stRef ~ 1 + RaceEthnicity + (1|School),
+           data= year7,
+             family = bernoulli(link = "logit"),
+             cores = 2,
+             backend = "cmdstan")
 
 summary(race)
 arm::display(race)
+
+conditional_effects(race)
+
+posterior_race <- insight::get_parameters(race)
+head(posterior_race)
+
+#Plots
+post_indig <- ggplot(posterior_race, aes(b_Intercept))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_asian <- ggplot(posterior_race, aes(b_RaceEthnicity2))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_latinx <- ggplot(posterior_race, aes(b_RaceEthnicity3))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_black <- ggplot(posterior_race, aes(b_RaceEthnicity4))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_white <- ggplot(posterior_race, aes(b_RaceEthnicity5))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_pac <- ggplot(posterior_race, aes(b_RaceEthnicity8))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+post_more <- ggplot(posterior_race, aes(b_RaceEthnicity44))+
+  geom_density(fill= "purple")+
+  geom_vline(xintercept = 0, 
+             color= "gray40",
+             linetype = "dashed", size = 1.2)
+
+
+#Probability of direction greater than zero
+
+sum(posterior_race$b_Intercept > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity2 > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity3 > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity4 > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity5 > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity8 > 0)/ nrow(posterior_race)
+sum(posterior_race$b_RaceEthnicity44 > 0)/ nrow(posterior_race)
+
+
+# > sum(posterior_race$b_RaceEthnicity44 > 0)/ nrow(posterior_race)
+# [1] 0.93525
+# > sum(posterior_race$b_RaceEthnicity8 > 0)/ nrow(posterior_race)
+# [1] 0.7215
+# > sum(posterior_race$b_RaceEthnicity5 > 0)/ nrow(posterior_race)
+# [1] 0.6485
+# > sum(posterior_race$b_RaceEthnicity4 > 0)/ nrow(posterior_race)
+# [1] 0.9945
+# > sum(posterior_race$b_RaceEthnicity3 > 0)/ nrow(posterior_race)
+# [1] 0.993
+# > sum(posterior_race$b_RaceEthnicity2 > 0)/ nrow(posterior_race)
+# [1] 0.99
+# > sum(posterior_race$b_Intercept > 0)/ nrow(posterior_race)
+# [1] 1
+
+
+#can't get this to work. need to figure out how to call out variable values properly for race. 
+pred_byrace <- expand.grid(
+  RaceEthnicity = c(2:5, 8, 44),
+  School = -999
+  ) %>% add_fitted_draws(race, n=500, allow_new_levels = TRUE)
+
+#need to redo variable values to make scale of plot better?
+ggplot(pred_byrace, aes(RaceEthnicity, .value))+
+  stat_lineribbon()+
+  scale_fill_brewer(palette = "Greys")
+
+
+exponentiate differences. 
+1:04
+
+
+#construct credible intervals for each race
+q_ex1 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity4,
+         probs = c(0.025, 0.5, 0.975))
+icc(race)
 
 # translate to probability:
 brms::inv_logit_scaled(fixef(race))
 
     # (Intercept)  RaceEthnicity2  RaceEthnicity3  RaceEthnicity4  RaceEthnicity5  RaceEthnicity8 RaceEthnicity44 
     #   0.6547389       0.6098714       0.5890622       0.5982255       0.5140159       0.5417021       0.5631654 
+```
+#Results
 
+The Rhat value across all Race/Ethnicity categories and the intercept was 1.00, indicating that the chains converged well. 
+The intercept for this model represents the log-likelihood of receiving OSS for Indigenous students. When converted to a probability value, Indigenous students in this sample had a 66% chance of being suspended, the most likely of any group. White/Caucasian students in the sample had the lowest likelihood of being suspended at 51%. Asian students were the second most likely to receive suspension (61%). Black/African American students were next most likely to receive suspension with a 60% probability, followed by Latinx students (59%), students of more than one race (56%), and Pacific Islander students (54%).
 
+#questions for group- would you expect negative coef for White with Indig. as intercept? What else do you report 
+``` {r q21}
 subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
                     RaceEthnicity + RaceEthnicity:Alcohol.1 +
                     RaceEthnicity:Drugs.1 + RaceEthnicity:Tobacco.1 +
