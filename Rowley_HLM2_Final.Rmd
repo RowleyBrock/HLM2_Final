@@ -1,0 +1,406 @@
+---
+title: "Rowley_HLM2_Final"
+author: "Brock Rowley"
+date: "6/8/2021"
+output:
+  html_document:
+    css: table_style.css
+bibliography: r-references.bib
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(papaja)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(lme4)
+library(here)
+library(rio)
+library(equatiomatic)
+library(performance)
+library(readr)
+library(brms)
+library(insight)
+library(broom.mixed)
+library(gghalves)
+
+year7 <- rio::import(here::here("data", "Year7_MLM.sav"))
+view(year7)
+### Explanation of variables:
+# * School = School ID.
+# * SID = Student ID.
+# * RaceEthnicity = Categorical variable of student race.
+# * OSS_1stRef = True/False (logical) student received Out of School Suspension
+# (OSS) on first referral in school year for substance possession.
+# * Alcohol.1, Drugs.1, Tobacco.1 = True/False (logical) student possessed named
+# substance in 1st referral.
+# * subtype = categorical variable of substance possessed on first referral.
+# Mutually exclusive categories eliminate some co-ocurrence that happened.
+# Probably won't use this variable, but there if needed.
+# * Gender = Male (0), Female(1)
+# * ODRCount = # of Office Discipline Refferal (ODRs) for substance in that school
+# year for each student.
+# * Grade = grade of student at time of referral.
+# * IEP = True/False (logical) if student had Individualize Education Plan (IEP)
+# at time of referral.
+# * BLW_Sample = Flag for students in schools that had minimum of 5% students in
+# each abbreviated race category (e.g., B=Black, L=Latinx) race categories
+# referred for substances in year. Likely not needed for these student-level
+# analyses.
+# * Tier1Fidelity: school was implementing Positive Behavioral Intervention
+# Supports (PBIS) with fidelity (1) or not (0) based on one of three measures that
+# year.
+```
+
+```{r clean_group}
+year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
+
+year7 <- year7 %>%
+   mutate(subtype = ifelse(PrimarySubstanceType.1 == 13, "Tobacco", 
+                     ifelse(PrimarySubstanceType.1 == 14, "Alcohol", "Drugs")), 
+          Alcohol.1 = as.factor(year7$Alcohol.1),
+          Drugs.1 = as.factor(year7$Drugs.1),
+          Tobacco.1 = as.factor(year7$Tobacco.1),
+          RaceEthnicity = as.factor(year7$RaceEthnicity),
+          School = as.factor(year7$School),
+          District = as.factor(year7$District),
+          RaceEthnicity = case_when(RaceEthnicity == 1 ~ "Native",
+                                    RaceEthnicity == 2 ~ "Asian",
+                                    RaceEthnicity == 3 ~ "Latinx",
+                                    RaceEthnicity == 4 ~ "Black",
+                                    RaceEthnicity == 5 ~ "White",
+                                    RaceEthnicity == 8 ~ "Pacific_Islander",
+                                    RaceEthnicity == 44 ~ "Multi"),
+          RaceEthnicity = as.factor(year7$RaceEthnicity))
+
+grouped <- year7 %>%
+  group_by(RaceEthnicity) %>%
+  count()
+view(grouped)
+```
+
+# Introduction:
+  Student substance misuse is an ongoing problem in schools across the United
+States, mostly outside the training and expertise of most educators.
+Nonetheless, school staff are presented with situations in which students bring
+substances to campus or arrive under the influence. Despite the evidence that
+zero-tolerance policies do not improve school safety or student behavior
+(@americanpsychologist), the likely default response in
+contemporary schools to substance-related behavior occurs through their
+discipline systems. Effective support for students is most promising if
+delivered through a preventative and proactive system as outlined with the
+Interconnected Systems Framework (ISF) (@emoreview). The ISF advocates
+integration and coordination with mental health service providers to meet a
+broader range of behavioral health needs more effectively. Although the national
+mindset is moving toward a more inclusive approach to behavioral health, this
+study seeks to determine to what extent school practices have shifted with it.
+The objective of this study is to leverage a national Office Discipline Referral
+(ODR) data set to examine the administrative decisions for substance possession
+referrals. Specifically, this study seeks to examine how use of Out-of-School
+Suspension (OSS) differs by substance possessed and student race/ethnicity.
+
+# Method:
+  ODR data from the SWIS database were extracted following a formal, written data
+request submitted by this author. This data set was obtained as a referral-level
+data set and required conversion to a student-level data set by running cases to
+variables command in SPSS. For all analyses of administrative actions taken in
+response to referrals, only a student’s first referral for substance possession
+was used, meaning any administrative actions in subsequent referrals were not
+included. Analysis was done using only the first referrals for substance
+possession for each student in the data set to eliminate concerns about possible
+confounding of analyses related to decision-making with subsequent referrals.
+## Data Source:
+  The data sample for the project comes from the web-based School-Wide
+Information System (SWIS) for collecting and analyzing school discipline data in
+the form of office discipline referrals (@disproport) and containing
+all referrals in the 2018-19 school year for possession of substances.  This
+dataset included 30,773 students in grades 6-12 across 45 states. Schools in the
+2018-19 dataset numbered 1,903 within 1,008 districts. ODRs are completed within
+schools through a standard form generated by a school staff member when students
+engage in violations of behavioral rules within the school. Within this form,
+fields are completed to indicate circumstances in which the behavior took place
+(e.g. date, time, location), characteristics of the undesired behavior (e.g.
+behavior category, perceived motivation), student characteristics (e.g.
+race/ethnicity, gender), and administrative actions taken (e.g. conference,
+suspension, expulsion). In addition, within the dataset, National Center for
+Educational Statistics (NCES) data characterizing school population (e.g. school
+demographics, population size) and setting (e.g. urbanicity) are paired with
+each referral. Student race/ethnicity and disability status data are entered by
+the school from enrollment records. The sample contained 66% male students and
+34% female students, with 15% of all students in the dataset having IEPs. The
+majority of students in the dataset were identified as White (52%), followed by
+Latinx students (23%), Black/African American students (10%), students of more
+than one race (2%), Indigenous students (2%), Pacific Islander students (1%),
+and Asian students (1%). The distribution of students by grade in the dataset
+was as follows: grade 6 (7%), grade 7 (14%), grade 8 (20%), grade 9 (21%), grade
+10 (18%), grade 11 (12%), and grade 12 (8%). The mean number of referrals per
+student was 1.21 (SD = 0.569), with a range of 1-14 referrals for students in
+the dataset.
+
+**Table 1**
+```{r table_plot}
+# cross tabs of race ethnicity by primary substance type
+tablesubxrace <- year7 %>%
+  group_by(RaceEthnicity, subtype) %>%
+  summarise(n = n()) %>%
+  spread(subtype, n)
+view(tablesubxrace)
+
+kable(
+  tablesubxrace,
+  format = "html",
+  col.names = c("RaceEthnicity", "Alcohol", "Drugs", "Tobacco"),
+  align = c("l", "c", "c", "c"),
+  caption = "Number of Office Refferals by Race and Substance Type"
+  ) %>%
+  kable_styling(full_width = TRUE) %>%
+  row_spec(row = 0, align = "c") %>%
+   footnote(
+    general_title = "Note.",
+    general = "1 = Native, 2 = Asian, 3 = Latinx, 4 = Black, 5 = White,
+    8 = Pacific_Islander, 44 = Multi.",
+   footnote_as_chunk = TRUE
+    )
+same_plot <- ggplot(year7, aes(ODRCount,RaceEthnicity)) +
+geom_line() +
+facet_wrap(~subtype)
+same_plot
+
+rain <- ggplot(year7, aes(x = RaceEthnicity, y = OSS_1stRef)) +
+  ggdist::stat_halfeye(
+    adjust = .5,
+    width = .6, 
+    .width = 0, 
+    justification = -.2,
+    point_colour = NA
+  ) + 
+  geom_boxplot(
+    width = .15,
+    outlier.shape = NA
+  ) +
+  ## add justified jitter from the {gghalves} package
+  gghalves::geom_half_point(
+    ## draw jitter on the left
+    side = "l", 
+    ## control range of jitter
+    range_scale = .4,
+    ## add some transparency
+    alpha = .3
+  ) +
+  coord_cartesian(xlim = c(1.2, NA), clip = "off")
+rain
+```
+
+### Data Processing:
+The following steps were taken to prepare the data set for analysis.
+A.	Restricting only the 2018-19 school year.
+B.	Creating variables within the referral-level data set.
+a.	dummy code use of suspension and expulsion for each referral.
+b.	dummy code type of substance possessed for each referral.
+C.	Ordering referrals by student ID and date.
+D.	Pivoting the data set wider by student so that referrals, in order of receipt,
+were nested with students.
+E.	Restricting the sample to 6-12 grades.
+F.	Restricting variables to those of interest (see variable definition above)
+## Missing Data
+Missing data was handled by listwise deletion for instances where an individual
+student's race or ethnicity was not available (i.e., listed as Not Applicable,
+NA). The race or ethnicity identifier was drawn from the National Center on
+Educational Statistics approach for collecting and disseminating extant data. In
+this case, 7.7% (2360 of 30773 observations) of the data was removed from
+analyses because there was insufficient demographic information.
+# Measures
+## Dependent Variable
+  Administrative decisions are actions taken in response to the behavior
+violation. Up to five administrative decisions can be listed for each ODR, and
+there are 14 options built into the SWIS referral form for administrators to
+choose from to describe their decision(s). Options include time in office, loss
+of privilege, conference with student, parent contact, timeout/detention,
+individualized instruction, in-school suspension (ISS), out of school suspension
+(OSS), expulsion, other administrative decision, unknown administrative
+decision, bus suspension, and restitution. The definitions for each action taken
+are provided in the SWIS training materials provided to stewards of data systems
+within each school. To understand the extent to which exclusionary discipline is
+used with students possessing substances, referral actions were coded to
+indicate whether ISS, OSS, any suspension (coded yes if student received either
+ISS or OSS), or expulsion were used with each individual referral. Per the SWIS
+training materials, OSS is defined as a 1-3 day period when student is not
+allowed on campus (although greater than 3 days was frequently reported under
+this code).
+
+## Independent Variables
+### Substance Type
+  Three substance types are delineated within the SWIS system: Alcohol Possession, Drug Possession, or Tobacco Possession. No additional specification is provided within these codes. For analysis, these codes were turned into dummy-coded variables.
+### Race/Ethnicity
+  The Race/Ethnicity codes available within this dataset follow federal codes, including codes for Asian, Black/African American, Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and White. This variable was included as a categorical variable. 
+
+## Independent Variables
+### Substance Type
+  Three substance types are delineated within the SWIS system: Alcohol Possession, Drug Possession, or Tobacco Possession. No additional specification is provided within these codes. For analysis, these codes were turned into dummy-coded variables.
+### Race/Ethnicity
+  The Race/Ethnicity codes available within this dataset follow federal codes, including codes for Asian, Black/African American, Latinx, Multiracial (more than one race), Indigenous, Pacific Islander, and White. This variable was included as a categorical variable.
+
+# Research Questions:
+1. To what extent does the substance a student possessed for their referral (Alcohol, Tobacco, or Drugs) predict whether or not they receive an out of school suspension for substance possession?
+2. To what extent does student race predict whether or not a student receives an out of school suspension for substance possession?
+3. To what extent is there an interaction between student race and substance in predicting out of school suspension for substance possession?
+
+# Writeup:
+  Descriptive analysis indicates some differences in likelihood of receiving OSS
+based on substance type and student race/ethnicity; however, the crosstab table
+shows that there are different possession trends by student race/ethnicity. For
+all research questions, modeling accounted for variance at the individual
+student and school levels. Modeling with nesting at the district level was
+considered as well, but over 64% of districts had only one school in the data
+set and 85% of districts had two or fewer schools, meaning interpretation of
+this variance at the district-level would have limited usefulness if analyzed
+with a three-level model.
+
+```{r unconditional_model}
+#unconditional models
+uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
+                family = binomial)
+
+# uncond1 <- glmer(OSS_1stRef ~ 1 + (1|School)+ (1|District), data = year7, 
+#                 family = binomial)
+
+#look at distribution schools per district: 84% have 2 or fewer
+#robust check, remove schools with only 1, run ICC again
+
+summary(uncond)
+
+# translate to probability:
+brms::inv_logit_scaled(fixef(uncond))
+
+#69% chance of OSS
+
+# Probability for an individual 1 SD below
+brms::inv_logit_scaled(-0.40 - 0.95)
+# Probability for an individual 1 SD above
+brms::inv_logit_scaled(-0.40 + 0.95)
+
+tidy_uncond <- tidy(uncond, "ran_vals", conf.int = TRUE) %>%
+  mutate(level = fct_reorder(level, estimate))
+
+ggplot(tidy_uncond, aes(estimate, level)) +
+  geom_linerange(aes(xmin = conf.low, xmax = conf.high),
+                 alpha = 0.01) +
+  geom_point(color = "#1DA1F2") +
+  # get rid of some plot elements
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank())
+
+uncond_brm <- brm(OSS_1stRef ~ 1 + (1|School), data = year7,
+            family = bernoulli(link = "logit"),
+            cores = 4,
+            backend = "cmdstanr")
+
+summary(uncond_brm)
+
+pp_check(uncond_brm, type = "bars")
+
+#plot(uncond_bmr)
+
+m0_posterior <- get_parameters(uncond_brm)
+head(uncond_brm)
+
+ggplot(m0_posterior, aes(b_Intercept)) +
+  geom_density(fill = "#1DA1F2") +
+  geom_vline(aes(xintercept = mean(b_Intercept)),
+             color = "magenta",
+             size = 1.2)
+```
+
+# Results:
+Suggested length - 1.5 to 2 pages If appropriate, discuss the results of your
+model building process and your model comparisons. Include and discuss at least
+one table of your model results. Make sure you link specific coefficients or
+model results to your research question. Include at least one plot from your
+model that communicates your findings (e.g., perhaps comparing the model
+predictions to the raw data, or the model predictions for two or more groups)
+
+# Research Question One:
+  Analyze use of OSS by substance, logistic multi-level modeling was used
+examine differential odds ratios while accounting for variance in decisions
+attributable to nesting at the school-level. Substance type variables were
+modeled with fixed effects, while variance at the school-level was allowed to
+vary as a random effect.
+``` {r q1}
+#conditional models -substance
+# When run all together, tobacco does not sig. predict OSS
+drug <- glmer(OSS_1stRef ~  1 + Drugs.1  + (1|School),
+             data= year7, 
+             family = binomial,
+             control = glmerControl(optimizer = "bobyqa")
+)
+# extract_eq(drug)
+
+alc <- glmer(OSS_1stRef ~  1 + Alcohol.1 + (1|School),
+             data= year7, 
+             family = binomial)
+# extract_eq(alc)
+
+tob <- glmer(OSS_1stRef ~  1 + Tobacco.1 + (1|School),
+             data= year7, 
+             family = binomial)
+# extract_eq(tob)
+sub <- glmer(OSS_1stRef ~ 1 + Alcohol.1 + Drugs.1 + Tobacco.1 + (1|School),
+      data= year7,
+      family = binomial,
+             control = glmerControl(optimizer = "bobyqa")
+)
+# extract_eq(sub)
+```
+
+```{r compare_models}
+compare_performance(uncond, tob, alc, drug, sub)
+
+# conditional_effects(sub)
+summary(sub)
+# confint(sub)
+# confint keeps throwing an error and I'm not sure why
+# exp(coef(sub))
+
+#could compute a mean_diff, like DA did in class. Though, I got a bit lost there too, because we need to know population parameters to input to a bayesian model before building out a likelihood ratio. So I'll start with pseudo code, then show how I might approach it with R
+
+# pred_white <- population_level + year7$RaceEthnicity = White
+# pred_latinx <- population_level + year7$RaceEthnicity = latinx
+# etc
+# sub_medians <- year7 %>%
+#   group_by(RaceEthnicity) # %>% 
+  # summarize(raceth_medians = median(pred_white, pred_latinx))
+
+# 
+# summary(subnonest)
+# summary(sub)
+# icc(sub)
+# confint(sub)
+# 
+# exp(fixef(drug)) 
+# exp(fixef(alc))
+# exp(fixef(tob))
+# exp(fixef(sub))
+# summary(subnonest) #find code for 
+
+# 
+# sub1 <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + (1|School), 
+#              data= year7, 
+#              family = binomial)
+```
+
+```{r plots}
+# You are required to create one plot from your model that communicates the coefficients, model predictions, or other features. You are welcome to include more than one, but at least one plot should be created.
+```
+
+# Discussion:
+  Sample data is from schools implementing PBIS. Average in schools that do not
+implement PBIS may be different. It may be appropriate to include other
+parameters in models. Only includes out-of-school suspension, and does not
+include other forms of exclusion. Nesting at the district-level would provide
+answers to questions about how factors at that level (district culture and
+policies) influence use of suspension, but with the present data, nesting at
+this level would not have provided those answers. The absence of all substances
+in a referral (i.e., the intercept) is impossible because the dataset contains
+only referrals for substance possession.
