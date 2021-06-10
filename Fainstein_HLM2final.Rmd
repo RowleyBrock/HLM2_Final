@@ -300,25 +300,78 @@ subxrace_brm <- brm(OSS_1stRef ~  1 + Drugs.1 + Tobacco.1 +
              # 1000 warmup + 2000 sampling
              backend = "cmdstan")
 
+subxrace_brm_3 <- brm(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
+                    RaceEthnicity +
+                    RaceEthnicity:Drugs.1 + RaceEthnicity:Tobacco.1 + 
+                      RaceEthnicity:Alcohol.1 +
+                    (1|School),
+             data= year7,
+             family = bernoulli(link = "logit"),
+             cores = 4,
+             iter = 2000,
+             warmup = 1000,
+             backend = "cmdstan")
+
 summary(subxrace_brm)
 
-#looking at probability per substance
-brms::inv_logit_scaled(fixef(subxrace_brm))
+#looking at probability per substance, race, and interaction
+probabilities <- as.data.frame(brms::inv_logit_scaled(fixef(subxrace_brm)))
 
 interaction_poster <- get_parameters(subxrace_brm)
+
+ggplot(interaction_poster, aes(b_Drugs.11.RaceEthnicity4)) +
+  geom_density(fill = "#91A8D0") +
+  geom_vline(xintercept = 0, 
+             color = "gray40",
+             linetype = "dashed",
+             size = 1.2) 
+
 example1 <- sum(interaction_poster$b_Drugs.11.RaceEthnicity4 > 0) / nrow(interaction_poster)
 example_comp <- sum(interaction_poster$b_Drugs.11.RaceEthnicity5 > 0) / nrow(interaction_poster)
 
-drugs_figure <- conditional_effects(subxrace_brm, "RaceEthnicity:Drugs.1")
-tobacco_figure <- conditional_effects(subxrace_brm, "RaceEthnicity:Tobacco.1")
+q_ex1 <- quantile(interaction_poster$b_Intercept +
+                  interaction_poster$b_Drugs.11 +
+                  interaction_poster$b_Drugs.11.RaceEthnicity4,
+         probs = c(0.025, 0.5, 0.975))
 
-# case_when(RaceEthnicity == 1 ~ "Native",
-#RaceEthnicity == 2 ~ "Asian",
-#RaceEthnicity == 3 ~ "Latinx",
-#RaceEthnicity == 4 ~ "Black",
-#RaceEthnicity == 5 ~ "White",
-#RaceEthnicity == 8 ~ "Pacific_Islander",
-#RaceEthnicity == 44 ~ "Multi"),
+q_ex2 <- quantile(interaction_poster$b_Intercept +
+                  interaction_poster$b_Drugs.11 +
+                  interaction_poster$b_Drugs.11.RaceEthnicity5,
+         probs = c(0.025, 0.5, 0.975))
+
+# drugs_figure <- conditional_effects(subxrace_brm, "RaceEthnicity:Drugs.1")
+# tobacco_figure <- conditional_effects(subxrace_brm, "RaceEthnicity:Tobacco.1")
+three_figure <- conditional_effects(subxrace_brm_3)
+
+# posterior_summary(subxrace_brm)
+
+# Full set of probabilities for comparison
+Drugs <- data.frame(
+Asian = sum(interaction_poster$b_Drugs.11.RaceEthnicity2 > 0) / nrow(interaction_poster),
+Latinx = sum(interaction_poster$b_Drugs.11.RaceEthnicity3 > 0) / nrow(interaction_poster),
+Black = sum(interaction_poster$b_Drugs.11.RaceEthnicity4 > 0) / nrow(interaction_poster),
+White = sum(interaction_poster$b_Drugs.11.RaceEthnicity5 > 0) / nrow(interaction_poster),
+PacificIslander = sum(interaction_poster$b_Drugs.11.RaceEthnicity8 > 0) / nrow(interaction_poster),
+Multi = sum(interaction_poster$b_Drugs.11.RaceEthnicity44 > 0) / nrow(interaction_poster))
+
+Tobacco <- data.frame(
+Asian = sum(interaction_poster$b_Tobacco.11.RaceEthnicity2 > 0) / nrow(interaction_poster),
+Latinx = sum(interaction_poster$b_Tobacco.11.RaceEthnicity3 > 0) / nrow(interaction_poster),
+Black = sum(interaction_poster$b_Tobacco.11.RaceEthnicity4 > 0) / nrow(interaction_poster),
+White = sum(interaction_poster$b_Tobacco.11.RaceEthnicity5 > 0) / nrow(interaction_poster),
+PacificIslander = sum(interaction_poster$b_Tobacco.11.RaceEthnicity8 > 0) / nrow(interaction_poster),
+Multi = sum(interaction_poster$b_Tobacco.11.RaceEthnicity44 > 0) / nrow(interaction_poster))
+
+Alcohol <- data.frame(
+Asian = sum(interaction_poster$b_RaceEthnicity2 > 0) / nrow(interaction_poster),
+Latinx = sum(interaction_poster$b_RaceEthnicity3 > 0) / nrow(interaction_poster),
+Black = sum(interaction_poster$b_RaceEthnicity4 > 0) / nrow(interaction_poster),
+White = sum(interaction_poster$b_RaceEthnicity5 > 0) / nrow(interaction_poster),
+PacificIslander = sum(interaction_poster$b_RaceEthnicity8 > 0) / nrow(interaction_poster),
+Multi = sum(interaction_poster$b_RaceEthnicity44 > 0) / nrow(interaction_poster))
+
+
+
 
 
 ```
@@ -342,7 +395,7 @@ with Race/Ethnicity as fixed effects, and the outcome varied randomly by school.
 It is noteworthy that at the completion of building the current model, all
 $\hat{r}$ values = 1.00 and the Pacific Islander race/ethnicity group had a
 sizable estimated error for one estimate (i.e., log-odds estimate of -0.61 with
-credible interval ranging [-2.99 - +1.59]). Because other estimates with the
+credible interval ranging [-2.99 - 1.59]). Because other estimates with the
 Pacific Islander race/ethnicity group had a much lower estimated error, this
 group was retained for interaction analyses.
 
@@ -359,18 +412,22 @@ the interaction among parameters nor the comparisons between them.
 
 For the interaction estimates, we will examine one example case: receiving an
 OSS for drugs as a black student. The log-odds of this occurrence is 2.09 (95%
-credible interval range [ - ]), and the probability is 89% (95% range: [% - %]).
-As a basis of comparison example, let's also examine OSS for drugs as a white
-student: log-odds are 1.57 (95% credible interval range [ - ]), and the
-probability is 82% (95% range: [% - %]). For a more direct comparison of these
-two cases, the difference between groups was computed based on the posterior
-distribution. Black students were approximately 3 times more likely than white
-students to receive a first-time OSS for drugs (20.8% likelihood for white
-students versus a 63.0% likelihood for black students).
+credible interval range [1.22 - 3.01]) with an associated probability of 89%. As
+a basis of comparison example, let's also examine OSS for drugs as a white
+student: log-odds are 1.57 (95% credible interval range [0.77 - 2.42]) with an
+associated probability of 82%. For a more direct comparison of these two cases,
+the difference between groups was computed based on the posterior distribution.
+Black students were approximately 3 times more likely than white students to
+receive a first-time OSS for drugs (20.8% likelihood for white students versus a
+63.0% likelihood for black students). Specific to drugs as the substance
+instigating a first time OSS, the racial/ethnic group most likely to receive
+this form of discipline was Pacific Islanders (84.6%), which was approximately 4
+times higher than the lowest likelihood group of receiving a first-time OSS for
+drugs, White students (20.8%).
 
 ## Discussion
 
-
+The wide ranging probabilities...
 
 
 # Recycled
