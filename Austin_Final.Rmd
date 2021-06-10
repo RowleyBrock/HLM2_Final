@@ -168,13 +168,81 @@ modeling accounted for variance at the individual student and school levels.
 Modeling with nesting at the district level was considered as well, but over 64%
 of districts had only one school in the dataset and 85% of districts had two or
 fewer schools, meaning interpretation of this variance at the district-level
-would have limited usefulness if analyzed with a three-level model. Flat, preset priors from the brms package were used as baseline estimates before introducing model iterations. (cite)
-## Q2 
-To analyze differences in exclusionary discipline by student
-Race/Ethnicity, multi-level modeling was used with student Race/Ethnicity as
-fixed effects and school varying as a random effect.
+would have limited usefulness if analyzed with a three-level model. 
+## Research Question 2
+  To analyze differences in exclusionary discipline by student Race/Ethnicity,
+multi-level modeling was used with student Race/Ethnicity as fixed effects and
+school varying as a random effect. A Bayesian approach was selected in order to
+allow for more flexible analysis of differences by race/ethnicity based on the
+posterior distribution. Flat, preset priors from the brms package were used as
+baseline estimates before introducing model iterations.
+
+# Results 
+"Suggested length - 1.5 to 2 pages If appropriate, discuss the results
+of your model building process and your model comparisons. Include and discuss
+at least one table of your model results. Make sure you link specific
+coefficients or model results to your research question. Include at least one
+plot from your model that communicates your findings (e.g., perhaps comparing
+the model predictions to the raw data, or the model predictions for two or more
+groups)"
+
+# Plot estimates by race
 
 
+#Results
+  An unconditional model was first run to understand how nesting affected the
+outcome variable. The adjusted intra-class correlation for the model was .633,
+indicating that 63.3% of the variance in the model is accounted for by variance
+at the school-level. This evidence was also used to support the decision to
+allow school-level effects to vary randomly to produce a better fitting model.
+In the conditional model with race/ethnicty as a fixed effect, the ICC was
+slightly larger at .645. The Rhat value across all race/ethnicity categories and
+the intercept was 1.00, indicating that the chains converged well. The intercept
+for this model represents the log-likelihood of receiving OSS for Indigenous
+students.
+On average, the log-odds of receiving suspension for possessing a substance at
+school for Indigenous students was .63 (95% credible interval = [.31, .93]), for
+Asian students was .63 + .45 = 1.09 (95% credible interval = [.79, 1.40]), for
+Latinx students was .63 + .36 = .99 (95% credible interval = [.84, 1.15]), for
+Black/African American students was .63 + .4 = 1.03 (95% credible interval =
+[.86, 1.21]), for White/Caucasian students was .63 + .06 = .69 (95% credible
+interval = [.55, .83]), for Pacific Islander students was .63 + .17 = .80 (95%
+credible interval = [.30, 1.286]), and for students of more than one race was
+.63 + .25 = .89  (95% credible interval = [.67, 1.11]). Figure 1 illustrates
+log-odds of receiving OSS for each student race/ethnicity category captured in
+the sample. The credible intervals for most groups overlap, but a few groups did
+not overlap with others. Specifically, estimates of log-likelihoods for
+White/Caucasian students did not overlap at all with those for students coded as
+Black/African American or Latinx.
+When converted to a probability value, Indigenous students in this sample had a
+66% chance of being suspended, the most likely of any group. White/Caucasian
+students in the sample had the lowest likelihood of being suspended at 51%.
+Asian students were the second most likely to receive suspension (61%).
+Black/African American students were next most likely to receive suspension with
+a 60% probability, followed by Latinx students (59%), students of more than one
+race (56%), and Pacific Islander students (54%).
+  The 95% credible interval crossed zero for White/Caucasian students, with a
+fairly even distribution (64% likelihood of being above zero), indicating a
+modestly increased likelihood that White/Caucasian students received OSS
+compared to Indigenous students. The 95% credible interval also crossed zero for
+both Pacific Islander students and students of more than one race; however, with
+these groups having much smaller counts of students in the sample, and with 72%
+and 95% of their posterior distributions, respectively, resulting in positive values, it
+appears more likely than not that students possessing substances in these
+racial/ethnic groups received OSS. For all other race/ethnicity categories
+(Black/African American, Latinx, Asian), 99% or greater of posterior estimates
+were above zero, indicating they were more likely than Indigenous students to be
+suspended.
+# Discussion 
+It is important for school administrators to understand the extent to which implicit bias can affect decision-making in school discipline. Previous literature had confirmed race as a significant predictor suspension from school (Skiba et al., 2014), and that students of color are more likely to receive exclusionary discipline for the same infraction (fighting) compared to White students (Anyon et al., 2014). These findings add to the literature by evaluating to what extent the likelihood of suspension for these more objective behavioral errors depends on student race. The results of this study indicate that there are material differences in likelihood of receiving OSS depending upon the race of the student being referred for substance possession. More specifically, these findings indicate that White students are less likely to receive suspension than both Latinx and Black students. Additionally, Indigenous students appear less likely to receive suspension than students coded as Latinx, Black, Asian, Pacific Islander, and more than one race. 
+
+##Limitations 
+  There are several limitations to the findings from this study. First, this
+sample is from schools implementing PBIS, and the likelihood of suspension may
+differ depending on whether or not a schools is implementing PBIS. Second, this
+model does not include other student characteristics that may influence
+likelihood of suspension. Third, this study was not able to account for nesting
+at the district-level due to small numbers of schools within districts.
 
 ```{r clean_group}
 year7$PrimarySubstanceType.1 <- as.factor(year7$PrimarySubstanceType.1)
@@ -248,7 +316,7 @@ uncond <- glmer(OSS_1stRef ~ 1 + (1|School), data = year7,
 #look at distribution schools per district: 84% have 2 or fewer
 #robust check, remove schools with only 1, run ICC again
 
-arm::display(uncond)
+icc(uncond)
 
 # translate to probability:
 brms::inv_logit_scaled(fixef(uncond))
@@ -314,16 +382,15 @@ race <- brm(OSS_1stRef ~ 1 + RaceEthnicity + (1|School),
              family = bernoulli(link = "logit"),
              cores = 2,
              backend = "cmdstan")
-
+#Model info
 summary(race)
-arm::display(race)
-
+icc(race)
 conditional_effects(race)
 
+#Plots
 posterior_race <- insight::get_parameters(race)
 head(posterior_race)
 
-#Plots
 post_indig <- ggplot(posterior_race, aes(b_Intercept))+
   geom_density(fill= "purple")+
   geom_vline(xintercept = 0, 
@@ -366,7 +433,6 @@ post_more <- ggplot(posterior_race, aes(b_RaceEthnicity44))+
              color= "gray40",
              linetype = "dashed", size = 1.2)
 
-
 #Probability of direction greater than zero
 
 sum(posterior_race$b_Intercept > 0)/ nrow(posterior_race)
@@ -376,7 +442,6 @@ sum(posterior_race$b_RaceEthnicity4 > 0)/ nrow(posterior_race)
 sum(posterior_race$b_RaceEthnicity5 > 0)/ nrow(posterior_race)
 sum(posterior_race$b_RaceEthnicity8 > 0)/ nrow(posterior_race)
 sum(posterior_race$b_RaceEthnicity44 > 0)/ nrow(posterior_race)
-
 
 # > sum(posterior_race$b_RaceEthnicity44 > 0)/ nrow(posterior_race)
 # [1] 0.93525
@@ -392,7 +457,6 @@ sum(posterior_race$b_RaceEthnicity44 > 0)/ nrow(posterior_race)
 # [1] 0.99
 # > sum(posterior_race$b_Intercept > 0)/ nrow(posterior_race)
 # [1] 1
-
 
 #can't get this to work. need to figure out how to call out variable values properly for race. 
 pred_byrace <- expand.grid(
@@ -411,10 +475,26 @@ exponentiate differences.
 
 
 #construct credible intervals for each race
-q_ex1 <- quantile(posterior_race$b_Intercept +
+q_ex2 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity2,
+         probs = c(0.025, 0.5, 0.975))
+q_ex3 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity3,
+         probs = c(0.025, 0.5, 0.975))
+q_ex4 <- quantile(posterior_race$b_Intercept +
                   posterior_race$b_RaceEthnicity4,
          probs = c(0.025, 0.5, 0.975))
-icc(race)
+q_ex5 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity5,
+         probs = c(0.025, 0.5, 0.975))
+q_ex8 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity8,
+         probs = c(0.025, 0.5, 0.975))
+q_ex44 <- quantile(posterior_race$b_Intercept +
+                  posterior_race$b_RaceEthnicity44,
+         probs = c(0.025, 0.5, 0.975))
+
+
 
 # translate to probability:
 brms::inv_logit_scaled(fixef(race))
@@ -422,182 +502,7 @@ brms::inv_logit_scaled(fixef(race))
     # (Intercept)  RaceEthnicity2  RaceEthnicity3  RaceEthnicity4  RaceEthnicity5  RaceEthnicity8 RaceEthnicity44 
     #   0.6547389       0.6098714       0.5890622       0.5982255       0.5140159       0.5417021       0.5631654 
 ```
-# Results 
-"Suggested length - 1.5 to 2 pages If appropriate, discuss the results
-of your model building process and your model comparisons. Include and discuss
-at least one table of your model results. Make sure you link specific
-coefficients or model results to your research question. Include at least one
-plot from your model that communicates your findings (e.g., perhaps comparing
-the model predictions to the raw data, or the model predictions for two or more
-groups)"
-
-# Plot estimates by race, 
-
-
-#Results
-
-  The Rhat value across all Race/Ethnicity categories and the intercept was 1.00,
-indicating that the chains converged well. The intercept for this model
-represents the log-likelihood of receiving OSS for Indigenous students. 
-
-On average, the log-odds of receiving suspension for possessing a substance at
-school for Indigenous students was .63 (95% credible interval = [.31, .93]),
-
-#advice computing own intervals?
-for Asian students was .63 + .45 = 1.08 (95% credible interval = [.07, .85]), 
-for Latinx students was .63 + .36 = 1.09 (95% credible interval = [.08, .65]), 
-for Black/African American students was .63 + .4 = 1.03 (95% credible interval = [.1, .71]), 
-for White/Caucasian students was .63 + .06 = .69 (95% credible interval = [-.23, .35]), 
-for Pacific Islander students was .63 + .17 = .80 (95% credible interval = [-.37, .71]), 
-and for students of more than one race was .63 + .25 = .88  (95% credible interval = [-.07, .60]).
-
-  When converted to a probability value, Indigenous students in this sample had a
-66% chance of being suspended, the most likely of any group. White/Caucasian
-students in the sample had the lowest likelihood of being suspended at 51%.
-Asian students were the second most likely to receive suspension (61%).
-Black/African American students were next most likely to receive suspension with
-a 60% probability, followed by Latinx students (59%), students of more than one
-race (56%), and Pacific Islander students (54%).
-  The 95% credible interval crossed zero for White/Caucasian students, with a
-fairly even distribution (64% likelihood of being above zero), indicating a
-modestly increased likelihood that White/Caucasian students received OSS more
-than 50% of the time in the population distribution. The 95% credible interval
-also crossed zero for both Pacific Islander students and students of more than
-one race; however, with these groups having much smaller counts of students in
-the sample, and with 72% and 95% of their posterior distributions resulting in
-positive values, it appears more likely than not that students possessing
-substances in these racial/ethnic groups received OSS. For all other
-race/ethnicity categories, 99% or greater of posterior estimates were above
-zero.
-  
-  
-# Discussion 
-"Suggested length - 0.5 to 1 page Briefly note any limitations.
-Very briefly mention how your findings link to the extant literature "
-
-Limitations 
-- Sample is from schools implementing PBIS. Average in schools that
-do not implement PBIS may be different. 
-- It may be appropriate to include other
-parameters in models 
-- Only includes out-of-school suspension, and does not
-include other forms of exclusion 
-- Nesting at the district-level would provide
-answers to questions about how factors at that level (district culture and
-policies) influence use of suspension, but with the present data, nesting at
-this level would not have provided those answers.
-  In sum
 
 
 
 
-``` {r q21}
-subxrace <- glmer(OSS_1stRef ~  1 + Alcohol.1 + Drugs.1 + Tobacco.1 +
-                    RaceEthnicity + RaceEthnicity:Alcohol.1 +
-                    RaceEthnicity:Drugs.1 + RaceEthnicity:Tobacco.1 +
-                    (1|School),
-             data= year7,
-             family = binomial) #specify reference group
-#still getting a convergence "failure", then running the model produces an object 
-
-summary(uncond)
-summary(sub)
-summary(race)
-summary(subxrace)
-
-icc(sub, by_group = TRUE)
-summary(sub1)
-
-# #New dataset restricting to only most diverse schools.
-# # Probably only necessary for school-level analysis
-# racedata <- year7[ which(year7$BLW_Sample==TRUE), ]
-# view(racedata)
-
-```
-
-# Research Question Three:
-Interpreting interaction?
-3. To what extent is there an interaction between student race and substance in
-predicting out of school suspension for substance possession?
-```{r Q3}
-#q3
-#maybe see if we can get separate dummy substances to run
-
-
-subxrace3 <- glmer(OSS_1stRef ~  1 + Drugs.1 * RaceEthnicity +
-                                    Tobacco.1 * RaceEthnicity +
-                    (1|School), 
-             data= year7, 
-             family = binomial,
-             control = glmerControl(optimizer = "bobyqa"))
-
-summary(subxrace3)
-
-pred_bysub <- expand.grid(
-  Alcohol.1 = 0:1,
-  Tobacco.1 = 0:1,
-  Drugs.1 = 0:1,
-  RaceEthnicity = 1:5,
-  School = -999
-) 
-# stuck here... "object 'Alcohol.1' not found"
-pred_bysub %>% 
-  mutate(
-    pred = predict(subxrace3,
-                   pred_bysub,
-                   allow.new.levels = TRUE)
-  )
-
-
-```
-
-``` {r recycled}
-            # ifelse(RaceEthnicity == 1, "Native",
-            #                     ifelse(RaceEthnicity == 2, "Asian",
-            #                     ifelse(RaceEthnicity == 3, "Latinx"))))
-
-# Getting errors trying to conslidate categories,need to figure out how to make missing
-# year7 <- year7 %>%
-#   mutate(RaceEthnicity = ifelse(RaceEthnicity == 1, "Native",
-#                                 ifelse(RaceEthnicity == 2, "Asian",
-#                                 ifelse(RaceEthnicity == 3, "Latinx"))))
-# 
-#                   ifelse(RaceEthnicity == 4, "Black",
-#                                 ifelse(RaceEthnicity == 5, "White",
-#                                 ifelse(RaceEthnicity == 8, "Pacific_Islander",
-#                                 ifelse(RaceEthnicity == 44, "Multi"))))
-#                                 
-# 
-#                                 # ifelse(RaceEthnicity == 6, is.na(), 
-#                                 # ifelse(RaceEthnicity == 7, is.na(), )
-```
-
-
-
-# Explanation of variables:
-* School = School ID.
-* SID = Student ID.
-* RaceEthnicity = Categorical variable of student race.
-* OSS_1stRef = True/False (logical) student received Out of School Suspension
-(OSS) on first referral in school year for substance possession.
-* Alcohol.1, Drugs.1, Tobacco.1 = True/False (logical) student possessed named
-substance in 1st referral.
-* subtype = categorical variable of substance possessed on first referral.
-Mutually exclusive categories eliminate some co-ocurrence that happened.
-Probably won't use this variable, but there if needed.
-* Gender = Male (0), Female(1)
-* ODRCount = # of Office Discipline Refferal (ODRs) for substance in that school
-year for each student.
-* Grade = grade of student at time of referral.
-* IEP = True/False (logical) if student had Individualize Education Plan (IEP)
-at time of referral.
-* BLW_Sample = Flag for students in schools that had minimum of 5% students in
-each abbreviated race category (e.g., B=Black, L=Latinx) race categories
-referred for substances in year. Likely not needed for these student-level
-analyses.
-* Tier1Fidelity: school was implementing Positive Behavioral Intervention
-Supports (PBIS) with fidelity (1) or not (0) based on one of three measures that
-year.
-
->>>>>>> Stashed changes
-Interpretation of coefficients for substance type will be interesting as well. Currently struggling with interpretation of the intercepts and betas in logistic multi-level modeling. The absence of all substances in a referral (i.e., the intercept) is impossible because the dataset contains only referrals for substance possession.
